@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{userId} {
+  		allow read: if request.auth != null;
+  		allow update: if request.auth.uid == userId || isAdmin();
+  		allow create: if request.auth != null;
+  		allow delete: if isAdmin() || (isGuest() && request.auth.uid == userId);
+		}
+    
+    match /menuCategories/{docId} { 
+    	allow read: if request.auth != null;
+    	allow read, write: if request.auth != null && request.auth.token.role == "admin"; 
+    }
+    
+    match /menuItems/{docId} { 
+    	allow read: if request.auth != null;
+    	allow read, write: if request.auth != null && request.auth.token.role == "admin"; 
+    }
+    
+    match /counters/{docId} { 
+    	allow read, write: if request.auth != null; 
+    }
+    
+    match /orders/{orderId} {
+
+      allow create: if request.auth != null;
+
+      allow read: if request.auth != null
+              && (request.auth.uid == resource.data.userUid
+              || request.auth.token.email == resource.data.userEmail);
+
+      allow read: if isEmpleado() || isAdmin() || isChef();
+
+      allow update: if request.auth != null
+                && request.auth.uid == resource.data.userUid;
+                
+      allow update: if isAdmin() || isChef();
+
+      allow delete: if isAdmin();
+    }
+    
+    match /cuentas_personales/{email} {
+    
+    	allow read, update, delete: if isAdmin();
+
+  		allow read, create, update: if request.auth != null 
+      	&& request.auth.token.email == email;
+		}
+    
+    function isAdmin() {
+      return request.auth.token.role == 'admin';
+    }
+
+    function isEmpleado() {
+      return request.auth.token.role == 'empleado';
+    }
+    
+    function isUsuario() {
+      return request.auth.token.role == 'usuario';
+    }
+    
+    function isGuest() {
+      return request.auth.token.role == 'guest';
+    }
+    
+    function isChef() {
+  		return request.auth.token.role == 'chef';
+		}
+  }
+}

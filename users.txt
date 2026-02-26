@@ -1,0 +1,9 @@
+email                       username            role        phoneNumber     ID
+"chemitron1@verizon.net"    "Luis F Marin"      "chef"   "932198828"        MBm4kY5Zj1elwrslIvU0lWzntX92
+"chemitron0910@gmail.com"   "Luis F Marin M"    "empleado"  "9732198825"    kK4o783vgheOaxSsVYB2xKyfZW42
+"marinluis@verizon.net"     "Luis Marin"        "admin"     "9732198827"    nRDjqZzJdgOy2VT46piAdIrjCwp1
+"sovranousuario@gmail.com"  "Sovranousuario"    "usuario"   "9732198816"    YGKZTY7BOHfyo6jcxGN8g4NWiCT2
+"sovranoempleado@aol.com"   "sovranoempleado"   "empleado"   "9732198854"   b9u2oVJPKpczEjGwbPKMNXJiJy12
+"estacion_1@aol.com"        "estacion_1"        "recepcion"   "9732198816"    LHAYzB64TRg80hRTVSJAfuteX5p1  
+
+389021Carolina
