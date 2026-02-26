@@ -4,5 +4,6 @@ npx expo install expo-notifications
 npm install expo-linear-gradient
 npx expo install @react-native-picker/picker
 npx expo install expo-image-picker
-npx expo install expo-barcode-scanner 'removed. It was causing build problems. You may try later at produciton stage
-expo install expo-av
+npx expo install expo-camera
+npx expo install expo-av
+npx expo install @react-native-community/datetimepicker

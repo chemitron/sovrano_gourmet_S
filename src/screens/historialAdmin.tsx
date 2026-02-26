@@ -20,7 +20,11 @@ import GradientBackground from "../../components/GradientBackground";
 import { db } from "../../services/firestore/firebase";
 import { Order } from "../types";
 
-export default function HistorialAdminScreen() {
+type HistorialAdminProps = {
+  role: string;
+};
+
+export default function HistorialAdminScreen({ role }: HistorialAdminProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>("__all__");
 
