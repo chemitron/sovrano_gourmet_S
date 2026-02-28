@@ -35,6 +35,11 @@ export default function ReportsIndex() {
             />
 
             <Button_style2
+              title="Inventario"
+              onPress={() => router.push("/administrador/reports/inventario")}
+            />
+
+            <Button_style2
               title="Historial de ordenes"
               onPress={() => router.push("/administrador/reports/historial")}
             />

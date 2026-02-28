@@ -426,5 +426,4 @@ pickerItem: {
   color: "#000",
   fontSize: 16,
 },
-
 });

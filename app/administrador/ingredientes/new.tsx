@@ -1,21 +1,32 @@
 import { Picker } from "@react-native-picker/picker";
 import { Stack, useRouter } from "expo-router";
-import { addDoc, collection, doc, getDoc, getFirestore, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  orderBy,
+  query,
+  updateDoc,
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import Button_style2 from "../../../components/Button_style2";
 import GradientBackground from "../../../components/GradientBackground";
 import { db } from "../../../services/firestore/firebase";
-
-type ItemCategory = {
-  id: string;
-  Categoryname: string;
-  categoryIndex: number;
-};
+import { ItemCategory } from "../../../src/types";
 
 export default function NewIngredient() {
   const router = useRouter();
-  const firestore = getFirestore();
 
   const [ingId, setIngId] = useState<number | null>(null);
   const [name, setName] = useState("");
@@ -24,11 +35,11 @@ export default function NewIngredient() {
   const [stock, setStock] = useState("");
   const [minStock, setMinStock] = useState("");
 
-  // ⭐ NEW: Category dropdown state
+  // Category dropdown state
   const [categories, setCategories] = useState<ItemCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // ⭐ Load next ingredient ID from counters/ingredients/current
+  // Load next ingredient ID
   useEffect(() => {
     const loadCounter = async () => {
       const ref = doc(db, "counters", "ingredients");
@@ -46,10 +57,10 @@ export default function NewIngredient() {
     loadCounter();
   }, []);
 
-  // ⭐ Load itemCategories for dropdown
+  // Load itemCategories for dropdown (FIXED: using db instead of getFirestore())
   useEffect(() => {
     const q = query(
-      collection(firestore, "itemCategories"),
+      collection(db, "itemCategories"),
       orderBy("categoryIndex", "asc")
     );
 
@@ -81,7 +92,7 @@ export default function NewIngredient() {
       return;
     }
 
-    // ⭐ 1. Create ingredient
+    // Create ingredient
     await addDoc(collection(db, "ingredients"), {
       ingId,
       name,
@@ -89,10 +100,10 @@ export default function NewIngredient() {
       cost: Number(cost) || 0,
       stock: Number(stock) || 0,
       minStock: Number(minStock) || 0,
-      categoryId: Number(selectedCategory), // ⭐ store category reference
+      categoryId: Number(selectedCategory),
     });
 
-    // ⭐ 2. Increment counter
+    // Increment counter
     const counterRef = doc(db, "counters", "ingredients");
     await updateDoc(counterRef, {
       current: ingId + 1,
@@ -114,7 +125,6 @@ export default function NewIngredient() {
 
       <GradientBackground>
         <ScrollView contentContainerStyle={styles.container}>
-
           <Text style={styles.label}>ID Automático: {ingId}</Text>
 
           {/* NAME */}
@@ -158,7 +168,9 @@ export default function NewIngredient() {
             <Picker
               selectedValue={selectedCategory}
               onValueChange={(v) => setSelectedCategory(v)}
-              style={{ color: "#000" }}
+              mode={Platform.OS === "android" ? "dropdown" : undefined}
+              style={styles.picker}
+              itemStyle={Platform.OS === "ios" ? styles.pickerItem : undefined}
             >
               <Picker.Item label="Seleccione categoría" value={null} />
               {categories.map((cat) => (
@@ -172,7 +184,6 @@ export default function NewIngredient() {
           </View>
 
           <Button_style2 title="Guardar" onPress={saveIngredient} />
-
         </ScrollView>
       </GradientBackground>
     </>
@@ -194,5 +205,16 @@ const styles = StyleSheet.create({
     borderColor: "black",
     borderRadius: 8,
     backgroundColor: "white",
+  },
+  picker: {
+    color: "#000",
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: "black",
+    borderRadius: 8,
+  },
+  pickerItem: {
+    color: "#000",
+    fontSize: 16,
   },
 });

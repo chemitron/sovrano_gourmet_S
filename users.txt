@@ -7,3 +7,4 @@ email                       username            role        phoneNumber     ID
 "estacion_1@aol.com"        "estacion_1"        "recepcion"   "9732198816"    LHAYzB64TRg80hRTVSJAfuteX5p1  
 
 389021Carolina
+npx expo start

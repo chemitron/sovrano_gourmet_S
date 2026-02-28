@@ -72,6 +72,14 @@ export type Ingredient = {
   ingId: number;
   name: string;
   unit: string;
+  cost: number;
   stock: number;
   minStock: number;
+  categoryId: number; // ⭐ FIXED
+};
+
+export type ItemCategory = {
+  id: string;
+  Categoryname: string;
+  categoryIndex: number;
 };

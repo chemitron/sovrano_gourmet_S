@@ -1,22 +1,33 @@
 import { Picker } from "@react-native-picker/picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { collection, deleteDoc, doc, getDoc, getFirestore, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  onSnapshot,
+  orderBy,
+  query,
+  updateDoc,
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import Button_style2 from "../../../components/Button_style2";
 import GradientBackground from "../../../components/GradientBackground";
 import { db } from "../../../services/firestore/firebase";
-
-type ItemCategory = {
-  id: string;
-  Categoryname: string;
-  categoryIndex: number;
-};
+import { ItemCategory } from "../../../src/types";
 
 export default function EditIngredient() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const firestore = getFirestore();
 
   const [loading, setLoading] = useState(true);
   const [ingId, setIngId] = useState<number>(0);
@@ -26,11 +37,11 @@ export default function EditIngredient() {
   const [stock, setStock] = useState("");
   const [minStock, setMinStock] = useState("");
 
-  // ⭐ NEW: category dropdown
+  // Category dropdown
   const [categories, setCategories] = useState<ItemCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // ⭐ Load ingredient data
+  // Load ingredient data
   useEffect(() => {
     const load = async () => {
       const ref = doc(db, "ingredients", id as string);
@@ -50,7 +61,6 @@ export default function EditIngredient() {
       setStock(String(data.stock));
       setMinStock(String(data.minStock));
 
-      // ⭐ Load categoryId
       if (data.categoryId !== undefined) {
         setSelectedCategory(String(data.categoryId));
       }
@@ -61,10 +71,10 @@ export default function EditIngredient() {
     load();
   }, []);
 
-  // ⭐ Load itemCategories for dropdown
+  // Load itemCategories for dropdown (FIXED: using db)
   useEffect(() => {
     const q = query(
-      collection(firestore, "itemCategories"),
+      collection(db, "itemCategories"),
       orderBy("categoryIndex", "asc")
     );
 
@@ -94,7 +104,7 @@ export default function EditIngredient() {
       cost: Number(cost),
       stock: Number(stock),
       minStock: Number(minStock),
-      categoryId: Number(selectedCategory), // ⭐ updated
+      categoryId: Number(selectedCategory),
     });
 
     router.back();
@@ -127,7 +137,6 @@ export default function EditIngredient() {
 
       <GradientBackground>
         <ScrollView contentContainerStyle={styles.container}>
-
           <Text style={styles.label}>ID: {ingId}</Text>
 
           <Text style={styles.label}>Nombre</Text>
@@ -160,13 +169,14 @@ export default function EditIngredient() {
             keyboardType="numeric"
           />
 
-          {/* ⭐ CATEGORY DROPDOWN */}
+          {/* CATEGORY DROPDOWN */}
           <Text style={styles.label}>Categoría</Text>
           <View style={styles.pickerWrapper}>
             <Picker
               selectedValue={selectedCategory}
-              onValueChange={(v) => setSelectedCategory(v)}
-              style={{ color: "#000" }}
+              mode={Platform.OS === "android" ? "dropdown" : undefined}
+              style={styles.picker}
+              itemStyle={Platform.OS === "ios" ? styles.pickerItem : undefined}
             >
               <Picker.Item label="Seleccione categoría" value={null} />
               {categories.map((cat) => (
@@ -182,9 +192,11 @@ export default function EditIngredient() {
           <Button_style2 title="Guardar Cambios" onPress={saveChanges} />
 
           <View style={{ marginTop: 20 }}>
-            <Button_style2 title="Eliminar Ingrediente" onPress={deleteIngredient} />
+            <Button_style2
+              title="Eliminar Ingrediente"
+              onPress={deleteIngredient}
+            />
           </View>
-
         </ScrollView>
       </GradientBackground>
     </>
@@ -206,5 +218,16 @@ const styles = StyleSheet.create({
     borderColor: "black",
     borderRadius: 8,
     backgroundColor: "white",
+  },
+  picker: {
+    color: "#000",
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: "black",
+    borderRadius: 8,
+  },
+  pickerItem: {
+    color: "#000",
+    fontSize: 16,
   },
 });
