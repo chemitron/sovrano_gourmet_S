@@ -3,18 +3,17 @@ import { signOut } from "firebase/auth";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from 'react';
 import {
-  Modal,
   StatusBar,
   StyleSheet,
   Text,
-  TextInput,
-  View,
+  View
 } from "react-native";
 import Button_style2 from "../../components/Button_style2";
 import GradientBackground from '../../components/GradientBackground';
 import Logo from '../../components/Logo';
 import { auth, db } from '../../services/firestore/firebase';
 import { useStation } from "../../src/context/StationContext";
+import StationSelectorModal from "../../src/screens/StationSelectorModal";
 
 export default function UsuarioIndex() {
 
@@ -87,47 +86,14 @@ useEffect(() => {
       }}
     />
 
-      <Modal visible={modalVisible} transparent animationType="fade">
-        <View style={{
-          flex: 1,
-          backgroundColor: "rgba(0,0,0,0.5)",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: 20,
-        }}>
-          <View style={{
-            backgroundColor: "white",
-            padding: 20,
-            borderRadius: 12,
-            width: "90%",
-          }}>
-            <Text style={{ fontSize: 18, marginBottom: 10 }}>
-              Estación asignada
-            </Text>
-
-            <TextInput
-              value={stationValue}
-              onChangeText={setStationValue}
-              autoCapitalize="none"
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                padding: 10,
-                borderRadius: 8,
-                marginBottom: 20,
-              }}
-            />
-
-            <Button_style2
-              title="Continuar"
-              onPress={() => {
-                setStationEmail(stationValue);
-                setModalVisible(false);
-              }}
-            />
-          </View>
-        </View>
-      </Modal>
+      <StationSelectorModal
+  visible={modalVisible}
+  defaultValue={stationValue}
+  onClose={() => setModalVisible(false)}
+  onStationSelected={(email) => {
+    setStationEmail(email);
+  }}
+/>
 
     <GradientBackground>
       <Logo />
