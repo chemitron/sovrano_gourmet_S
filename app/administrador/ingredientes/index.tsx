@@ -61,13 +61,6 @@ export default function IngredientsAdmin() {
           />
 
           <Button_style2
-            title="Re-abastecer"
-            onPress={() =>
-              router.push("/administrador/ingredientes/replenishment")
-            }
-          />
-
-          <Button_style2
             title="Agregar Ingrediente"
             onPress={() => router.push("/administrador/ingredientes/new")}
           />

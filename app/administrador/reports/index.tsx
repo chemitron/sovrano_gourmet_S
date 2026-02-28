@@ -35,6 +35,13 @@ export default function ReportsIndex() {
             />
 
             <Button_style2
+              title="Re-abastecer"
+              onPress={() =>
+              router.push("/administrador/ingredientes/replenishment")
+              }
+            />
+
+            <Button_style2
               title="Inventario"
               onPress={() => router.push("/administrador/reports/inventario")}
             />

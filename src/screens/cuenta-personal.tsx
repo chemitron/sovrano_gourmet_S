@@ -97,7 +97,7 @@ export default function CuentaPersonalScreen() {
       }) as Order[];
 
       setOrders(
-  list.filter((o) => o.status !== "cancelado" && o.served !== true)
+  list.filter((o) => o.status !== "cancelado")
 );
     });
 
@@ -132,8 +132,7 @@ export default function CuentaPersonalScreen() {
 
   const canCancel = (order: Order) => {
     if (order.status === "cancelado") return false;
-    if (order.status === "listo") return false;
-    if (order.status === "entregado") return false;
+    if (order.status === "servida") return false;
     return true;
   };
 

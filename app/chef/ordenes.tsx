@@ -11,7 +11,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import Button_style2 from "../../components/Button_style2";
 import GradientBackground from "../../components/GradientBackground";
@@ -20,6 +20,7 @@ import { Order } from "../../src/types";
 
 export default function ChefOrdenes() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const knownOrderIdsRef = useRef<Set<string>>(new Set());
   const [knownOrderIds, setKnownOrderIds] = useState<Set<string>>(new Set());
   const [now, setNow] = useState(Date.now());
   const getElapsed = (createdAt: any) => {
@@ -73,41 +74,43 @@ export default function ChefOrdenes() {
   }, []);
 
   useEffect(() => {
-    const q = query(
-      collection(db, "orders"),
-      where("paymentStatus", "==", "charged"),
-      where("approvalStatus", "==", "aprobado"),
-      where("served", "==", false)
-    );
+  const q = query(
+    collection(db, "orders"),
+    where("paymentStatus", "==", "charged"),
+    where("approvalStatus", "==", "aprobado"),
+    where("served", "==", false)
+  );
 
-    const unsub = onSnapshot(q, (snap) => {
-  const list = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Order[];
+  const unsub = onSnapshot(q, (snap) => {
+    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Order[];
 
-  // Detect NEW orders by ID
-  const newIds = list
-    .map((o) => o.id)
-    .filter((id) => !knownOrderIds.has(id));
+    const currentIds = new Set(list.map((o) => o.id));
+    const previousIds = knownOrderIdsRef.current;
 
-  if (newIds.length > 0) {
-    playNewOrderSound();
-  }
+    // NEW ORDERS = IDs in current snapshot but not in previous snapshot
+    const newIds = [...currentIds].filter((id) => !previousIds.has(id));
 
-  // Detect canceled orders
-  list.forEach((order) => {
-    const prev = orders.find((o) => o.id === order.id);
-    if (prev && prev.status !== "cancelado" && order.status === "cancelado") {
-      playCancelSound();
+    if (newIds.length > 0) {
+      playNewOrderSound();
     }
+
+    // Detect canceled orders
+    list.forEach((order) => {
+      const prev = orders.find((o) => o.id === order.id);
+      if (prev && prev.status !== "cancelado" && order.status === "cancelado") {
+        playCancelSound();
+      }
+    });
+
+    // Update ref (instant, no re-render)
+    knownOrderIdsRef.current = currentIds;
+
+    // Update UI state
+    setOrders(list);
   });
 
-  // Update known IDs
-  setKnownOrderIds(new Set(list.map((o) => o.id)));
-
-  setOrders(list);
-});
-
-    return () => unsub();
-  }, []);
+  return () => unsub();
+}, []);
 
   const markStarted = async (orderId: string) => {
     try {

@@ -1,22 +1,22 @@
 import { Stack } from "expo-router";
 import {
-    collection,
-    doc,
-    increment,
-    onSnapshot,
-    orderBy,
-    query,
-    updateDoc,
+  collection,
+  doc,
+  increment,
+  onSnapshot,
+  orderBy,
+  query,
+  updateDoc,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Button_style2 from "../../../components/Button_style2";
 import GradientBackground from "../../../components/GradientBackground";
@@ -137,6 +137,11 @@ export default function ReplenishmentScreen() {
             onChangeText={setSearch}
           />
 
+          <Button_style2
+            title="Re-abastecer"
+            onPress={replenishAll}
+          />
+
           <Text style={styles.sectionTitle}>Selecciona ingredientes</Text>
 
           {filtered.map((ing) => (
@@ -155,11 +160,6 @@ export default function ReplenishmentScreen() {
               </Text>
             </TouchableOpacity>
           ))}
-
-           <Button_style2
-                title="Re-abastecer"
-                onPress={replenishAll}
-              />
 
           {selected.length > 0 && (
             <>
