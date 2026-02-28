@@ -40,9 +40,7 @@ export default function Manejo_Menu_ItemsIndex() {
       collection(db, "menuCategories"),
       orderBy("categoryIndex", "asc")
     );
-//console.log(`🟦 [manejo_menu_items_cat] Creating listener for order`);
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      //console.log(`🟩 [manejo_menu_items_cat] Snapshot fired for order`);
       const list: MenuCategory[] = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...(doc.data() as Omit<MenuCategory, "id">),
@@ -51,7 +49,6 @@ export default function Manejo_Menu_ItemsIndex() {
     });
 
     return () => {
-      //console.log(`🟧 [manejo_menu_items_cat] Cleaning listener for order`);
       unsubscribe();
     };
   }, []);
@@ -62,19 +59,16 @@ export default function Manejo_Menu_ItemsIndex() {
       collection(db, "menuItems"),
       orderBy("itemIndex", "asc")
     );
-//console.log(`🟦 [manejo_menu_items_ite] Creating listener for order`);
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const list: MenuItem[] = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...(doc.data() as Omit<MenuItem, "id">),
       }));
-//console.log(`🟩 [manejo_menu_items_ite] Snapshot fired for order`);
       setItems(list);
       setLoading(false);
     });
 
     return () => {
-      //console.log(`🟧 [manejo_menu_items_ite] Cleaning listener for order`);
       unsubscribe();
     };
   }, []);

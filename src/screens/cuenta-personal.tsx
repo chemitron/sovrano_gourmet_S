@@ -253,7 +253,6 @@ export default function CuentaPersonalScreen() {
 
               <TouchableOpacity
                 onPress={() => {
-                  console.log("🟡 Order selected:", order);
                   setSelectedOrder(order);
                   setModalVisible(true);
                 }}
@@ -307,7 +306,6 @@ export default function CuentaPersonalScreen() {
             <Button_style2
               title="Cerrar"
               onPress={() => {
-                console.log("🔵 Closing modal");
                 setModalVisible(false);
               }}
             />

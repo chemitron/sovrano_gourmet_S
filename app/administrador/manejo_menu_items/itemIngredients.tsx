@@ -1,27 +1,27 @@
 import { Picker } from "@react-native-picker/picker";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
-    collection,
-    deleteDoc,
-    doc,
-    getDoc,
-    getFirestore,
-    onSnapshot,
-    orderBy,
-    query,
-    setDoc
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getFirestore,
+  onSnapshot,
+  orderBy,
+  query,
+  setDoc
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Button_style2 from "../../../components/Button_style2";
 import GradientBackground from "../../../components/GradientBackground";
@@ -127,8 +127,6 @@ export default function ItemIngredients() {
       unit: ingredient.unit,
       qty_needed: Number(qty),
     });
-
-    Alert.alert("Éxito", "Ingrediente guardado correctamente");
   };
 
   const deleteIngredient = async (id: string) => {

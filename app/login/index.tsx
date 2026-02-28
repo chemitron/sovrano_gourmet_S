@@ -147,7 +147,6 @@ const [stationValue, setStationValue] = useState(
       try {
         const { status } = await Notifications.requestPermissionsAsync();
         if (status !== 'granted') {
-          console.warn('Notification permissions not granted');
           return;
         }
 

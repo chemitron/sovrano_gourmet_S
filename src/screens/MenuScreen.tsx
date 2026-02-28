@@ -241,7 +241,6 @@ async function addItemToOrder(item: MenuItem) {
   ],
 });
   } catch (err) {
-    console.error("Error adding item:", err);
   }
 }
 

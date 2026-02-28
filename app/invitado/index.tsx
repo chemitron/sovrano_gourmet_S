@@ -30,7 +30,6 @@ export default function InvitadoIndex() {
       router.dismissAll();
       router.replace("/login");
     } catch (error) {
-      //console.log("Logout error:", error);
     }
   };
   

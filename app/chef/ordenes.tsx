@@ -51,7 +51,6 @@ export default function ChefOrdenes() {
       );
       await sound.playAsync();
     } catch (e) {
-      console.log("Sound error:", e);
     }
   };
 
@@ -62,7 +61,6 @@ export default function ChefOrdenes() {
       );
       await sound.playAsync();
     } catch (e) {
-      console.log("Cancel sound error:", e);
     }
   };
 
@@ -157,7 +155,6 @@ export default function ChefOrdenes() {
         startedAt: new Date(),
       });
     } catch (e) {
-      console.log("Inventory deduction error:", e);
       Alert.alert("Error", "No se pudo descontar inventario");
     }
   };
@@ -215,8 +212,8 @@ export default function ChefOrdenes() {
                 {/* LEFT SIDE */}
                 <View style={styles.leftSide}>
                   <Text style={styles.headerText}>
-                    Orden #{order.orderNumber} •{" "}
-                    {order.username ?? "Sin nombre"} • {order.estacion} •{" "}
+                    Orden #{order.orderNumber} --   {" "}
+                    {order.username ?? "Sin nombre"} --    {order.estacion?.split("@")[0]} --   {" "}
                     {getElapsed(order.createdAt)}
                   </Text>
 

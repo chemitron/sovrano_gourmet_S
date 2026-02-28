@@ -56,18 +56,15 @@ export default function EditMenuItem() {
       collection(db, "menuCategories"),
       orderBy("categoryIndex", "asc")
     );
-//console.log(`🟦 [edit_menu_items] Creating listener for order`);
     const unsub = onSnapshot(q, (snapshot) => {
       const list: MenuCategory[] = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...(doc.data() as Omit<MenuCategory, "id">),
       }));
-      //console.log(`🟩 [edit_menu_items] Snapshot fired for order`);
       setCategories(list);
     });
 
     return () => {
-      //console.log(`🟧 [edit_menu_items] Cleaning listener for order`);
       unsub();
     };
   }, []);
