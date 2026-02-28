@@ -14,18 +14,25 @@ export default function ScannerScreen({
   email?: string | null;
   username?: string | null;
 }) {
+  console.log("📸 ScannerScreen MOUNTED");
+
   const { setStationEmail } = useStation();
   const [permission, requestPermission] = useCameraPermissions();
   const [isScanning, setIsScanning] = useState(false);
 
   const isExpoGo = Constants.appOwnership === "expo";
 
+  useEffect(() => {
+    return () => {
+      console.log("📴 ScannerScreen UNMOUNTED");
+    };
+  }, []);
+
   if (isExpoGo) {
+    console.log("⚠️ Running in Expo Go — scanner disabled");
     return (
       <View style={styles.center}>
-        <Text style={styles.warning}>
-          El escáner no funciona en Expo Go.
-        </Text>
+        <Text style={styles.warning}>El escáner no funciona en Expo Go.</Text>
         <Text style={styles.subtext}>
           Instala la app desde TestFlight o usa un build de producción.
         </Text>
@@ -34,12 +41,16 @@ export default function ScannerScreen({
   }
 
   useEffect(() => {
+    console.log("🔐 Permission object:", permission);
+
     if (!permission?.granted) {
+      console.log("🔐 Requesting camera permission…");
       requestPermission();
     }
   }, [permission]);
 
   if (!permission) {
+    console.log("⏳ Waiting for permission object…");
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" />
@@ -48,53 +59,73 @@ export default function ScannerScreen({
   }
 
   if (!permission.granted) {
+    console.log("❌ Camera permission NOT granted");
     return (
       <View style={styles.center}>
-        <Text style={styles.warning}>
-          Necesitas otorgar permiso a la cámara.
-        </Text>
+        <Text style={styles.warning}>Necesitas otorgar permiso a la cámara.</Text>
       </View>
     );
   }
 
   const extractStation = (data: string): string | null => {
+    console.log("🔍 Extracting station from:", data);
+
     try {
       if (data.startsWith("{")) {
         const parsed = JSON.parse(data);
+        console.log("🔍 Parsed JSON:", parsed);
         return parsed.stationEmail || parsed.estacion || null;
       }
 
       if (data.includes("station=")) {
-        return data.split("station=")[1];
+        const extracted = data.split("station=")[1];
+        console.log("🔍 Extracted via station= :", extracted);
+        return extracted;
       }
 
       if (data.includes("@")) {
+        console.log("🔍 Detected email-like station:", data);
         return data;
       }
 
+      console.log("⚠️ No station found in QR");
       return null;
-    } catch {
+    } catch (err) {
+      console.log("❌ Error parsing QR:", err);
       return null;
     }
   };
 
   const handleBarcodeScanned = ({ data }: { data: string }) => {
-    if (isScanning) return;
+    console.log("📡 QR DETECTED:", data);
+
+    if (isScanning) {
+      console.log("⏸ Ignoring scan — already processing");
+      return;
+    }
+
     setIsScanning(true);
+    console.log("🔄 isScanning set to TRUE");
 
     const station = extractStation(data);
+    console.log("🏷 Station extracted:", station);
 
     if (station) {
+      console.log("💾 Saving station:", station);
       setStationEmail(station);
 
       if (role === "invitado") {
+        console.log("➡️ Navigating to /invitado");
         router.replace("/invitado");
       } else if (role === "usuario") {
+        console.log("➡️ Navigating to /usuario");
         router.replace("/usuario");
       } else {
+        console.log("➡️ Unknown role — defaulting to /invitado");
         router.replace("/invitado");
       }
     } else {
+      console.log("❌ Invalid QR — resetting scan state");
       setIsScanning(false);
     }
   };
@@ -105,15 +136,20 @@ export default function ScannerScreen({
         style={styles.camera}
         facing="back"
         barcodeScannerSettings={{
-          barcodeTypes: ["qr"],
+          barcodeTypes: [
+            "qr",
+            "pdf417",
+            "aztec",
+            "datamatrix",
+            "code128",
+            "ean13",
+          ],
         }}
         onBarcodeScanned={handleBarcodeScanned}
       />
 
       <View style={styles.overlay}>
-        <Text style={styles.scanText}>
-          Escanea el código QR de la estación
-        </Text>
+        <Text style={styles.scanText}>Escanea el código QR de la estación</Text>
       </View>
     </View>
   );
