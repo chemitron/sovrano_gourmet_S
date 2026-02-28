@@ -155,7 +155,6 @@ export default function AdminCuentasScreen() {
 
 <View style={styles.topRow}>
   <Text style={styles.topItem}>{acc.username}</Text>
-  <Text style={styles.topItem}>{customerName}</Text>
   <Text style={styles.topItem}>Saldo: ${acc.balance.toFixed(2)}</Text>
 </View>
 
