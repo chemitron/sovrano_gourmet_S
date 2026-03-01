@@ -131,6 +131,15 @@ useEffect(() => {
   </View>
 )}
 
+{(role === "chef" ) && (
+  <View style={{ paddingBottom: 10 }}>
+    <Button_style2
+      title="Chef"
+      onPress={() => router.push("/chef")}
+    />
+  </View>
+)}
+
 {(role === "recepcion") && (
   <View style={{ paddingBottom: 10 }}>
     <Button_style2
