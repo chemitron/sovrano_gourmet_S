@@ -216,7 +216,7 @@ export default function ChefOrdenes() {
                 <View style={styles.leftSide}>
                   <Text style={styles.headerText}>
                     Orden #{order.orderNumber} --   {" "}
-                    {order.username ?? "Sin nombre"} --    {order.estacion?.split("@")[0]} --   {" "}
+                    {order.username ?? "Sin nombre"} --    {order.invitado?.split("@")[0]} --   {" "}
                     {getElapsed(order.createdAt)}
                   </Text>
 

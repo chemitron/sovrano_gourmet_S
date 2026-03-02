@@ -53,7 +53,7 @@ export default function AdminCuentasScreen() {
     accounts.forEach((acc) => {
       const q = query(
         collection(db, "orders"),
-        where("estacion", "==", acc.email),
+        where("invitado", "==", acc.email),
         where("chargedToAccount", "==", true),
         where("accountPaid", "==", false)
       );

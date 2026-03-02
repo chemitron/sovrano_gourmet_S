@@ -7,25 +7,25 @@ import Button_style2 from "../../components/Button_style2";
 // -----------------------------
 // ⭐ Strongly typed props
 // -----------------------------
-interface StationSelectorModalProps {
+interface InvitadoSelectorModalProps {
   visible: boolean;
   onClose: () => void;
-  onStationSelected: (email: string) => void;
+  onInvitadoSelected: (email: string) => void;
   defaultValue?: string;
 }
 
-export default function StationSelectorModal({
+export default function InvitadoSelectorModal({
   visible,
   onClose,
-  onStationSelected,
+  onInvitadoSelected,
   defaultValue = "",
-}: StationSelectorModalProps) {
+}: InvitadoSelectorModalProps) {
   const isExpoGo = Constants.appOwnership === "expo";
-  const [stationValue, setStationValue] = useState(defaultValue);
+  const [invitadoValue, setInvitadoValue] = useState(defaultValue);
   const [permission, requestPermission] = useCameraPermissions();
 
   const handleSelect = (value: string) => {
-    onStationSelected(value);
+    onInvitadoSelected(value);
     onClose();
   };
 
@@ -54,8 +54,8 @@ export default function StationSelectorModal({
 
           {/* Manual input */}
           <TextInput
-            value={stationValue}
-            onChangeText={setStationValue}
+            value={invitadoValue}
+            onChangeText={setInvitadoValue}
             autoCapitalize="none"
             placeholder="Ingresa estación manualmente"
             style={{
@@ -91,7 +91,7 @@ export default function StationSelectorModal({
           {/* Continue button */}
           <Button_style2
             title="Continuar"
-            onPress={() => handleSelect(stationValue)}
+            onPress={() => handleSelect(invitadoValue)}
           />
         </View>
       </View>

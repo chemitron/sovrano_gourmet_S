@@ -24,11 +24,11 @@ import {
 import Button_style2 from "../../components/Button_style2";
 import GradientBackground from "../../components/GradientBackground";
 import { auth, db } from "../../services/firestore/firebase";
-import { useStation } from "../../src/context/StationContext";
+import { useInvitado } from "../context/InvitadoContext";
 import { Order } from "../types";
 
 export default function CuentaPersonalScreen() {
-  const { stationEmail } = useStation();
+  const { invitadoEmail } = useInvitado();
   const [role, setRole] = useState<string | null>(null);
   const [balance, setBalance] = useState(0);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -58,7 +58,7 @@ export default function CuentaPersonalScreen() {
   const email =
     role === "empleado"
       ? empleadoEmail
-      : stationEmail;
+      : invitadoEmail;
 
   // ---------------------------
   // Load balance
@@ -85,7 +85,7 @@ export default function CuentaPersonalScreen() {
 
     const q = query(
       collection(db, "orders"),
-      where("estacion", "==", email),
+      where("invitado", "==", email),
       where("accountPaid", "==", false),
       orderBy("createdAt", "desc")
     );
@@ -164,7 +164,7 @@ export default function CuentaPersonalScreen() {
 
         await updateDoc(orderRef, {
           chargedToAccount: true,
-          paymentMethod: "cuenta-personal-estacion",
+          paymentMethod: "cuenta-personal-invitado",
           paymentStatus: "charged",
           approvalStatus: "aprobado",
           paidAt: serverTimestamp(),

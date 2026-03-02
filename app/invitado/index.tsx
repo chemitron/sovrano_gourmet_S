@@ -15,10 +15,10 @@ import Button_style2 from "../../components/Button_style2";
 import GradientBackground from "../../components/GradientBackground";
 import Logo from "../../components/Logo";
 import { auth, db } from "../../services/firestore/firebase";
-import { useStation } from "../../src/context/StationContext";
+import { useInvitado } from "../../src/context/InvitadoContext";
 
 export default function InvitadoIndex() {
-  const { stationEmail, setStationEmail } = useStation();
+  const { invitadoEmail, setInvitadoEmail } = useInvitado();
   const params = useLocalSearchParams<{ from?: string }>();
 
   const isExpoGo = Constants.appOwnership === "expo";
@@ -27,10 +27,10 @@ export default function InvitadoIndex() {
   const [closedMessage, setClosedMessage] = useState("");
 
   // Modal state for Expo Go
-  const [showStationIdModal, setShowStationIdModal] = useState(false);
+  const [showInvitadoIdModal, setShowInvitadoIdModal] = useState(false);
 
   // Pre-filled full email
-  const [stationInput, setStationInput] = useState(
+  const [invitadoInput, setInvitadoInput] = useState(
     "invitado_1@sovranogourmet.com"
   );
 
@@ -38,16 +38,16 @@ export default function InvitadoIndex() {
   // 🚀 1. Redirect to scanner OR open modal in Expo Go
   // -----------------------------------------------------
   useEffect(() => {
-    const shouldOpen = params.from === "login" || !stationEmail;
+    const shouldOpen = params.from === "login" || !invitadoEmail;
 
     if (!shouldOpen) return;
 
     if (isExpoGo) {
-      setShowStationIdModal(true);
+      setShowInvitadoIdModal(true);
     } else {
       router.replace("/invitado/scanner");
     }
-  }, [params.from, stationEmail]);
+  }, [params.from, invitadoEmail]);
 
   // -----------------------------------------------------
   // 🔥 2. Cocina open/closed listener
@@ -75,13 +75,13 @@ export default function InvitadoIndex() {
   };
 
   // -----------------------------------------------------
-  // 🟦 Handle station submission
+  // 🟦 Handle invitado submission
   // -----------------------------------------------------
-  const handleStationSubmit = () => {
-    if (!stationInput.trim()) return;
+  const handleInvitadoSubmit = () => {
+    if (!invitadoInput.trim()) return;
 
-    setStationEmail(stationInput.trim());
-    setShowStationIdModal(false);
+    setInvitadoEmail(invitadoInput.trim());
+    setShowInvitadoIdModal(false);
   };
 
   return (
@@ -94,25 +94,25 @@ export default function InvitadoIndex() {
       />
 
       {/* -----------------------------------------------------
-          🟦 Expo Go Station Email Modal
+          🟦 Expo Go invitado Email Modal
       ----------------------------------------------------- */}
-      <Modal visible={showStationIdModal} transparent animationType="fade">
+      <Modal visible={showInvitadoIdModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Ingresar invitado QR</Text>
+            <Text style={styles.modalTitle}>Ingresar invitado Id</Text>
 
             <TextInput
               style={styles.modalInput}
               placeholder="invitado_1@sovranogourmet.com"
-              value={stationInput}
-              onChangeText={setStationInput}
+              value={invitadoInput}
+              onChangeText={setInvitadoInput}
               autoCapitalize="none"
             />
 
-            <Button_style2 title="Aceptar" onPress={handleStationSubmit} />
+            <Button_style2 title="Aceptar" onPress={handleInvitadoSubmit} />
             <Button_style2
               title="Cancelar"
-              onPress={() => setShowStationIdModal(false)}
+              onPress={() => setShowInvitadoIdModal(false)}
             />
           </View>
         </View>
@@ -125,7 +125,7 @@ export default function InvitadoIndex() {
         <View style={styles.container}>
           <Logo />
 
-          {stationEmail && (
+          {invitadoEmail && (
             <Text
               style={{
                 fontSize: 16,
@@ -133,7 +133,7 @@ export default function InvitadoIndex() {
                 marginBottom: 10,
               }}
             >
-              Estación: {stationEmail}
+              Invitado: {invitadoEmail}
             </Text>
           )}
 

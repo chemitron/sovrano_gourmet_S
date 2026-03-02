@@ -3,7 +3,7 @@ import Constants from "expo-constants";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { useStation } from "../context/StationContext";
+import { useInvitado } from "../context/InvitadoContext";
 
 export default function ScannerScreen({
   role,
@@ -15,7 +15,7 @@ export default function ScannerScreen({
   username?: string | null;
 }) {
 
-  const { setStationEmail } = useStation();
+  const { setInvitadoEmail } = useInvitado();
   const [permission, requestPermission] = useCameraPermissions();
   const [isScanning, setIsScanning] = useState(false);
   const isExpoGo = Constants.appOwnership === "expo";
@@ -59,16 +59,16 @@ export default function ScannerScreen({
     );
   }
 
-  const extractStation = (data: string): string | null => {
+  const extractInvitado = (data: string): string | null => {
 
     try {
       if (data.startsWith("{")) {
         const parsed = JSON.parse(data);
-        return parsed.stationEmail || parsed.estacion || null;
+        return parsed.invitadoEmail || parsed.invitado || null;
       }
 
-      if (data.includes("station=")) {
-        const extracted = data.split("station=")[1];
+      if (data.includes("inivtado=")) {
+        const extracted = data.split("invitado=")[1];
         return extracted;
       }
 
@@ -90,10 +90,10 @@ export default function ScannerScreen({
 
     setIsScanning(true);
 
-    const station = extractStation(data);
+    const invitado = extractInvitado(data);
 
-    if (station) {
-      setStationEmail(station);
+    if (invitado) {
+      setInvitadoEmail(invitado);
 
       if (role === "invitado") {
         router.replace("/invitado");
@@ -126,7 +126,7 @@ export default function ScannerScreen({
       />
 
       <View style={styles.overlay}>
-        <Text style={styles.scanText}>Escanea el código QR de la estación</Text>
+        <Text style={styles.scanText}>Escanea el código QR del invitado</Text>
       </View>
     </View>
   );

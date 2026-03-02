@@ -88,17 +88,17 @@ export default function CheckoutScreen() {
 
     // USUARIO / INVITADO FLOW
     if (isUsuario) {
-      const estacionId = order!.estacion?.trim().toLowerCase();
+      const invitadoId = order!.invitado?.trim().toLowerCase();
 
       await updateDoc(doc(db, "orders", id), {
-        paymentMethod: "cuenta-personal-estacion",
+        paymentMethod: "cuenta-personal-invitado",
         accountPaid: false,
-        estacion: estacionId,
+        invitado: invitadoId,
       });
 
       router.push({
         pathname: "/usuario/cuenta-personal",
-        params: { orderId: id, estacion: estacionId },
+        params: { orderId: id, invitado: invitadoId },
       });
     }
   }

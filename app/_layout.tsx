@@ -1,15 +1,15 @@
 import { Stack } from "expo-router";
-import { StationProvider } from "../src/context/StationContext";
+import { InvitadoProvider } from "../src/context/InvitadoContext";
 
 export default function RootLayout() {
   return (
-    <StationProvider>
+    <InvitadoProvider>
     <Stack
       screenOptions={{
         headerShown: true,
         headerBackVisible: true,
       }}
     />
-    </StationProvider>
+    </InvitadoProvider>
   );
 }

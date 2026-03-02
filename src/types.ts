@@ -53,7 +53,7 @@ export type Order = {
   approvalStatus?: string;
   createdAt?: any;
   status?: string;
-  estacion?: string;
+  invitado?: string;
   chargedToAccount?: boolean;
   accountPaid?: boolean;
   served?: boolean;

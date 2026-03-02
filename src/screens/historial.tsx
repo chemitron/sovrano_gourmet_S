@@ -10,11 +10,11 @@ import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import GradientBackground from "../../components/GradientBackground";
 import { auth, db } from "../../services/firestore/firebase";
-import { useStation } from "../../src/context/StationContext";
+import { useInvitado } from "../context/InvitadoContext";
 import { Order } from "../types";
 
 export default function HistorialScreen({ role }: { role: string }) {
-  const { stationEmail } = useStation();
+  const { invitadoEmail } = useInvitado();
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
@@ -33,10 +33,10 @@ export default function HistorialScreen({ role }: { role: string }) {
         where("createdAt", ">=", thirtyDaysAgo),
         orderBy("createdAt", "desc")
       );
-    } else if (stationEmail) {
+    } else if (invitadoEmail) {
       q = query(
         collection(db, "orders"),
-        where("estacion", "==", stationEmail),
+        where("invitado", "==", invitadoEmail),
         where("createdAt", ">=", thirtyDaysAgo),
         orderBy("createdAt", "desc")
       );
@@ -56,7 +56,7 @@ export default function HistorialScreen({ role }: { role: string }) {
     });
 
     return () => unsub();
-  }, [stationEmail]);
+  }, [invitadoEmail]);
 
   return (
     <>

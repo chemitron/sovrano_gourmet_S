@@ -15,7 +15,7 @@ import Button_style2 from "../../components/Button_style2";
 import GradientBackground from '../../components/GradientBackground';
 import Logo from '../../components/Logo';
 import { auth, db } from '../../services/firestore/firebase';
-import { useStation } from "../../src/context/StationContext";
+import { useInvitado } from "../../src/context/InvitadoContext";
 
 export default function UsuarioIndex() {
 
@@ -29,31 +29,31 @@ export default function UsuarioIndex() {
   const [isCocinaOpen, setIsCocinaOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState("");
 
-  const { stationEmail, setStationEmail } = useStation();
+  const { invitadoEmail, setInvitadoEmail } = useInvitado();
   const params = useLocalSearchParams<{ from?: string }>();
 
   const isExpoGo = Constants.appOwnership === "expo";
 
   // Modal state for Expo Go
-  const [showStationModal, setShowStationModal] = useState(false);
-  const [stationInput, setStationInput] = useState(
-    "estacion_1@sovranogourmet.com"
+  const [showInvitadoModal, setShowInvitadoModal] = useState(false);
+  const [invitadoInput, setInvitadoInput] = useState(
+    "invitado_1@sovranogourmet.com"
   );
 
   // -----------------------------------------------------
   // 🚀 1. Redirect to scanner OR open modal in Expo Go
   // -----------------------------------------------------
   useEffect(() => {
-    const shouldOpen = params.from === "login" || !stationEmail;
+    const shouldOpen = params.from === "login" || !invitadoEmail;
 
     if (!shouldOpen) return;
 
     if (isExpoGo) {
-      setShowStationModal(true);
+      setShowInvitadoModal(true);
     } else {
       router.replace("/usuario/scanner");
     }
-  }, [params.from, stationEmail]);
+  }, [params.from, invitadoEmail]);
 
   // -----------------------------------------------------
   // 🔥 2. Cocina open/closed listener
@@ -100,13 +100,13 @@ export default function UsuarioIndex() {
   };
 
   // -----------------------------------------------------
-  // 🟦 Handle station submission (Expo Go only)
+  // 🟦 Handle invitado submission (Expo Go only)
   // -----------------------------------------------------
-  const handleStationSubmit = () => {
-    if (!stationInput.trim()) return;
+  const handleInvitadoSubmit = () => {
+    if (!invitadoInput.trim()) return;
 
-    setStationEmail(stationInput.trim());
-    setShowStationModal(false);
+    setInvitadoEmail(invitadoInput.trim());
+    setShowInvitadoModal(false);
   };
 
   return (
@@ -120,25 +120,25 @@ export default function UsuarioIndex() {
       />
 
       {/* -----------------------------------------------------
-          🟦 Expo Go Station Email Modal
+          🟦 Expo Go invitado Email Modal
       ----------------------------------------------------- */}
-      <Modal visible={showStationModal} transparent animationType="fade">
+      <Modal visible={showInvitadoModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Ingresar estación</Text>
 
             <TextInput
               style={styles.modalInput}
-              placeholder="estacion_1@sovranogourmet.com"
-              value={stationInput}
-              onChangeText={setStationInput}
+              placeholder="invitado_1@sovranogourmet.com"
+              value={invitadoInput}
+              onChangeText={setInvitadoInput}
               autoCapitalize="none"
             />
 
-            <Button_style2 title="Aceptar" onPress={handleStationSubmit} />
+            <Button_style2 title="Aceptar" onPress={handleInvitadoSubmit} />
             <Button_style2
               title="Cancelar"
-              onPress={() => setShowStationModal(false)}
+              onPress={() => setShowInvitadoModal(false)}
             />
           </View>
         </View>

@@ -24,8 +24,8 @@ import {
 } from "react-native";
 import { getNextSequence } from "../../services/firestore/counters";
 import { auth } from '../../services/firestore/firebase';
-import { useStation } from "../../src/context/StationContext";
 import type { MenuCategory, MenuItem } from "../../src/types";
+import { useInvitado } from "../context/InvitadoContext";
 
 export default function MenuScreen({
   role,
@@ -46,13 +46,13 @@ export default function MenuScreen({
   const [cartCount, setCartCount] = useState(0);
   const [itemsInOrder, setItemsInOrder] = useState<any[]>([]);
   const [orderNumber, setOrderNumber] = useState<number | null>(null);
-  const { stationEmail } = useStation();
+  const { invitadoEmail } = useInvitado();
   const empleadoEmail = auth.currentUser?.email ?? null;
 
-const estacionValue =
+const invitadoValue =
   role === "empleado"
     ? empleadoEmail
-    : stationEmail;
+    : invitadoEmail;
 
 useEffect(() => {
 
@@ -192,13 +192,13 @@ async function addItemToOrder(item: MenuItem) {
   orderNumber,
   userUid: auth.currentUser?.uid ?? null,
 
-  // ⭐ If guest → use stationEmail as userEmail
-  userEmail: role === "guest" ? stationEmail : email ?? null,
+  // ⭐ If guest → use invitadoEmail as userEmail
+  userEmail: role === "guest" ? invitadoEmail : email ?? null,
 
   username: username ?? null,
 
-  // ⭐ Always store estacion
-  estacion: estacionValue ?? null,
+  // ⭐ Always store invitado
+  invitado: invitadoValue ?? null,
 
   createdAt: serverTimestamp(),
   status: "pendiente",
@@ -225,8 +225,8 @@ async function addItemToOrder(item: MenuItem) {
     await updateDoc(orderRef, {
   username: username ?? null,
 
-  // ⭐ Always keep estacion updated
-  estacion: estacionValue ?? null,
+  // ⭐ Always keep invitado updated
+  invitado: invitadoValue ?? null,
 
   items: [
     ...itemsInOrder,
