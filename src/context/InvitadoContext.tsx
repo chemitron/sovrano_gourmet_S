@@ -3,15 +3,21 @@ import React, { createContext, useContext, useState } from "react";
 type InvitadoContextType = {
   invitadoEmail: string | null;
   setInvitadoEmail: (email: string | null) => void;
+  nombreInvitado: string | null;
+  setNombreInvitado: (nombreInvitado: string | null) => void;
+  nombreEstilista: string | null;
+  setNombreEstilista: (nombreEstilista: string | null) => void;
 };
 
 const InvitadoContext = createContext<InvitadoContextType | undefined>(undefined);
 
 export const InvitadoProvider = ({ children }: { children: React.ReactNode }) => {
   const [invitadoEmail, setInvitadoEmail] = useState<string | null>(null);
+  const [nombreInvitado, setNombreInvitado] = useState<string | null>(null);
+  const [nombreEstilista, setNombreEstilista] = useState<string | null>(null);
 
   return (
-    <InvitadoContext.Provider value={{ invitadoEmail, setInvitadoEmail }}>
+    <InvitadoContext.Provider value={{ invitadoEmail, setInvitadoEmail, nombreInvitado, setNombreInvitado, nombreEstilista, setNombreEstilista }}>
       {children}
     </InvitadoContext.Provider>
   );
@@ -23,4 +29,19 @@ export const useInvitado = () => {
     throw new Error("useInvitado must be used within a InvitadoProvider");
   }
   return context;
+};
+
+export const useNombreInvitado = () => { 
+  const context = useContext(InvitadoContext); 
+  if (!context) { 
+    throw new Error("useNombreInvitado must be used within an InvitadoProvider"); 
+  } 
+  return { nombreInvitado: context.nombreInvitado, setNombreInvitado: context.setNombreInvitado, }; 
+};
+export const useNombreEstilista = () => { 
+  const context = useContext(InvitadoContext); 
+  if (!context) { throw new Error("useNombreEstilista must be used within an InvitadoProvider"); 
+
+  } 
+  return { nombreEstilista: context.nombreEstilista, setNombreEstilista: context.setNombreEstilista, }; 
 };

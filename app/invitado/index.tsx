@@ -4,7 +4,10 @@ import { signOut } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
+  KeyboardAvoidingView,
   Modal,
+  Platform,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -15,24 +18,26 @@ import Button_style2 from "../../components/Button_style2";
 import GradientBackground from "../../components/GradientBackground";
 import Logo from "../../components/Logo";
 import { auth, db } from "../../services/firestore/firebase";
-import { useInvitado } from "../../src/context/InvitadoContext";
+import { useInvitado, useNombreEstilista, useNombreInvitado } from "../../src/context/InvitadoContext";
 
 export default function InvitadoIndex() {
   const { invitadoEmail, setInvitadoEmail } = useInvitado();
+  const { nombreInvitado, setNombreInvitado } = useNombreInvitado();
+  const { nombreEstilista, setNombreEstilista } = useNombreEstilista();
   const params = useLocalSearchParams<{ from?: string }>();
-
   const isExpoGo = Constants.appOwnership === "expo";
-
   const [isCocinaOpen, setIsCocinaOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState("");
 
   // Modal state for Expo Go
-  const [showInvitadoIdModal, setShowInvitadoIdModal] = useState(false);
+  const [showInvitadoModal, setShowInvitadoModal] = useState(false);
 
   // Pre-filled full email
   const [invitadoInput, setInvitadoInput] = useState(
     "invitado_1@sovranogourmet.com"
   );
+  const [nombreInvitadoInput, setNombreInvitadoInput] = useState("");
+  const [nombreEstilistaInput, setNombreEstilistaInput] = useState("");
 
   // -----------------------------------------------------
   // 🚀 1. Redirect to scanner OR open modal in Expo Go
@@ -43,7 +48,7 @@ export default function InvitadoIndex() {
     if (!shouldOpen) return;
 
     if (isExpoGo) {
-      setShowInvitadoIdModal(true);
+      setShowInvitadoModal(true);
     } else {
       router.replace("/invitado/scanner");
     }
@@ -78,11 +83,19 @@ export default function InvitadoIndex() {
   // 🟦 Handle invitado submission
   // -----------------------------------------------------
   const handleInvitadoSubmit = () => {
-    if (!invitadoInput.trim()) return;
+  if (!isFormValid) return;
 
-    setInvitadoEmail(invitadoInput.trim());
-    setShowInvitadoIdModal(false);
-  };
+  setInvitadoEmail(invitadoInput.trim());
+  setNombreInvitado(nombreInvitadoInput.trim());
+  setNombreEstilista(nombreEstilistaInput.trim());
+
+  setShowInvitadoModal(false);
+};
+
+  const isFormValid =
+  invitadoInput.trim().length > 0 &&
+  nombreInvitadoInput.trim().length > 0 &&
+  nombreEstilistaInput.trim().length > 0;
 
   return (
     <>
@@ -96,27 +109,58 @@ export default function InvitadoIndex() {
       {/* -----------------------------------------------------
           🟦 Expo Go invitado Email Modal
       ----------------------------------------------------- */}
-      <Modal visible={showInvitadoIdModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Ingresar invitado Id</Text>
+      <Modal visible={showInvitadoModal} transparent animationType="fade">
+  <KeyboardAvoidingView
+    behavior={Platform.OS === "ios" ? "padding" : "height"}
+    style={{ flex: 1 }}
+  >
+    <ScrollView
+      contentContainerStyle={styles.modalOverlay}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.modalBox}>
+        <Text style={styles.modalTitle}>Invitado Id</Text>
 
-            <TextInput
-              style={styles.modalInput}
-              placeholder="invitado_1@sovranogourmet.com"
-              value={invitadoInput}
-              onChangeText={setInvitadoInput}
-              autoCapitalize="none"
-            />
+        <TextInput
+          style={styles.modalInput}
+          placeholder="invitado_1@sovranogourmet.com"
+          value={invitadoInput}
+          onChangeText={setInvitadoInput}
+          autoCapitalize="none"
+        />
 
-            <Button_style2 title="Aceptar" onPress={handleInvitadoSubmit} />
-            <Button_style2
-              title="Cancelar"
-              onPress={() => setShowInvitadoIdModal(false)}
-            />
-          </View>
-        </View>
-      </Modal>
+        <Text style={styles.modalTitle}>Nombre de invitado</Text>
+        <TextInput
+          style={styles.modalInput}
+          value={nombreInvitadoInput}
+          onChangeText={setNombreInvitadoInput}
+        />
+
+        <Text style={styles.modalTitle}>Nombre de estilista</Text>
+        <TextInput
+          style={styles.modalInput}
+          value={nombreEstilistaInput}
+          onChangeText={setNombreEstilistaInput}
+          autoCapitalize="none"
+        />
+
+        <Button_style2
+  title="Aceptar"
+  onPress={handleInvitadoSubmit}
+  disabled={!isFormValid}
+/>
+
+        <Button_style2
+  title="Cancelar"
+  onPress={() => {
+    setShowInvitadoModal(false);
+    router.replace("/login");
+  }}
+/>
+      </View>
+    </ScrollView>
+  </KeyboardAvoidingView>
+</Modal>
 
       {/* -----------------------------------------------------
           MAIN UI

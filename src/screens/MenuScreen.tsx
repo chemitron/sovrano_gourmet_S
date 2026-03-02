@@ -25,7 +25,7 @@ import {
 import { getNextSequence } from "../../services/firestore/counters";
 import { auth } from '../../services/firestore/firebase';
 import type { MenuCategory, MenuItem } from "../../src/types";
-import { useInvitado } from "../context/InvitadoContext";
+import { useInvitado, useNombreEstilista, useNombreInvitado } from "../context/InvitadoContext";
 
 export default function MenuScreen({
   role,
@@ -47,12 +47,17 @@ export default function MenuScreen({
   const [itemsInOrder, setItemsInOrder] = useState<any[]>([]);
   const [orderNumber, setOrderNumber] = useState<number | null>(null);
   const { invitadoEmail } = useInvitado();
+  const { nombreInvitado } = useNombreInvitado();
+  const { nombreEstilista } = useNombreEstilista();
   const empleadoEmail = auth.currentUser?.email ?? null;
 
 const invitadoValue =
   role === "empleado"
     ? empleadoEmail
     : invitadoEmail;
+
+const nombreInvitadoValue = nombreInvitado;
+const nombreEstilistaValue = nombreEstilista;
 
 useEffect(() => {
 
@@ -202,6 +207,8 @@ async function addItemToOrder(item: MenuItem) {
 
   // ⭐ Always store invitado
   invitado: invitadoValue ?? null,
+  nombreInvitado: nombreInvitadoValue ?? null,
+  nombreEstilista: nombreEstilistaValue ?? null,
 
   createdAt: serverTimestamp(),
   status: "pendiente",
@@ -234,6 +241,8 @@ async function addItemToOrder(item: MenuItem) {
 
   // ⭐ Always keep invitado updated
   invitado: invitadoValue ?? null,
+  nombreInvitado: nombreInvitadoValue ?? null,
+  nombreEstilista: nombreEstilistaValue ?? null,
 
   items: [
     ...itemsInOrder,

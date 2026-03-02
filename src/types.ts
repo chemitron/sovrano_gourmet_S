@@ -60,6 +60,8 @@ export type Order = {
   empezada?: boolean;
   userEmail?: string;
   role?: string;
+  nombreInvitado?: string;
+  nombreEstilista?: string;
 };
 
 export type Account = {

@@ -7,3 +7,4 @@ npx expo install expo-image-picker
 npx expo install expo-camera
 npx expo install expo-av
 npx expo install @react-native-community/datetimepicker
+npx expo install expo-screen-orientation

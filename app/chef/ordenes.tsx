@@ -1,5 +1,6 @@
 import { Audio } from "expo-av";
 import { Stack } from "expo-router";
+import * as ScreenOrientation from "expo-screen-orientation";
 import {
   collection,
   doc,
@@ -77,6 +78,13 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+  ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+  return () => {
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+  };
+}, []);
 
   useEffect(() => {
   const q = query(
@@ -226,8 +234,7 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
                 <View style={styles.rowSplit}>
                   <View style={styles.leftSide}>
                     <Text style={styles.headerText}>
-                      Orden #{order.orderNumber} — {order.username ?? "Sin nombre"} —{" "}
-                      {order.invitado?.split("@")[0]} — {getElapsed(order.createdAt)}
+                      Orden #{order.orderNumber} — {order.username ?? "Sin nombre"} —{" "} {getElapsed(order.createdAt)}
                     </Text>
 
                     {order.items?.map((item, i) => (
@@ -281,8 +288,10 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
                 <View style={styles.rowSplit}>
                   <View style={styles.leftSide}>
                     <Text style={styles.headerText}>
-                      Orden #{order.orderNumber} — {order.username ?? "Sin nombre"} —{" "}
-                      {order.invitado?.split("@")[0]} — {getElapsed(order.createdAt)}
+                      Orden #{order.orderNumber} — 
+                      Cliente: {order.username?.trim() || order.nombreInvitado || "Sin nombre"
+                    } • Estil: {order.nombreEstilista ?? "No estilista"} —{" "}
+                      {getElapsed(order.createdAt)}
                     </Text>
 
                     {order.items?.map((item, i) => (

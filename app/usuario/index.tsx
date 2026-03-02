@@ -1,10 +1,12 @@
-import Constants from "expo-constants";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { signOut } from "firebase/auth";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from 'react';
 import {
+  KeyboardAvoidingView,
   Modal,
+  Platform,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -15,7 +17,7 @@ import Button_style2 from "../../components/Button_style2";
 import GradientBackground from '../../components/GradientBackground';
 import Logo from '../../components/Logo';
 import { auth, db } from '../../services/firestore/firebase';
-import { useInvitado } from "../../src/context/InvitadoContext";
+import { useNombreEstilista } from "../../src/context/InvitadoContext";
 
 export default function UsuarioIndex() {
 
@@ -25,35 +27,27 @@ export default function UsuarioIndex() {
 
   const [role, setRole] = useState<string | null>(null);
   const [uid, setUid] = useState<string | null>(null);
-
   const [isCocinaOpen, setIsCocinaOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState("");
 
-  const { invitadoEmail, setInvitadoEmail } = useInvitado();
+  const { nombreEstilista, setNombreEstilista } = useNombreEstilista();
   const params = useLocalSearchParams<{ from?: string }>();
 
-  const isExpoGo = Constants.appOwnership === "expo";
-
-  // Modal state for Expo Go
-  const [showInvitadoModal, setShowInvitadoModal] = useState(false);
-  const [invitadoInput, setInvitadoInput] = useState(
-    "invitado_1@sovranogourmet.com"
-  );
+  // Modal state
+  const [showEstilistaModal, setShowEstilistaModal] = useState(false);
+  const [nombreEstilistaInput, setNombreEstilistaInput] = useState("");
 
   // -----------------------------------------------------
-  // 🚀 1. Redirect to scanner OR open modal in Expo Go
+  // 🚀 1. Show modal BEFORE scanner
   // -----------------------------------------------------
   useEffect(() => {
-    const shouldOpen = params.from === "login" || !invitadoEmail;
+    const shouldOpen = params.from === "login" || !nombreEstilista;
 
     if (!shouldOpen) return;
 
-    if (isExpoGo) {
-      setShowInvitadoModal(true);
-    } else {
-      router.replace("/usuario/scanner");
-    }
-  }, [params.from, invitadoEmail]);
+    // Always show modal first
+    setShowEstilistaModal(true);
+  }, [params.from, nombreEstilista]);
 
   // -----------------------------------------------------
   // 🔥 2. Cocina open/closed listener
@@ -100,14 +94,19 @@ export default function UsuarioIndex() {
   };
 
   // -----------------------------------------------------
-  // 🟦 Handle invitado submission (Expo Go only)
+  // 🟦 Handle stylist submission
   // -----------------------------------------------------
-  const handleInvitadoSubmit = () => {
-    if (!invitadoInput.trim()) return;
+  const handleEstilistaSubmit = () => {
+    if (!nombreEstilistaInput.trim()) return;
 
-    setInvitadoEmail(invitadoInput.trim());
-    setShowInvitadoModal(false);
+    setNombreEstilista(nombreEstilistaInput.trim());
+    setShowEstilistaModal(false);
+
+    // Now open scanner
+    router.replace("/usuario/scanner");
   };
+
+  const isFormValid = nombreEstilistaInput.trim().length > 0;
 
   return (
     <>
@@ -120,28 +119,44 @@ export default function UsuarioIndex() {
       />
 
       {/* -----------------------------------------------------
-          🟦 Expo Go invitado Email Modal
+          🟦 Estilista Modal (BEFORE scanner)
       ----------------------------------------------------- */}
-      <Modal visible={showInvitadoModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Ingresar estación</Text>
+      <Modal visible={showEstilistaModal} transparent animationType="fade">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <ScrollView
+            contentContainerStyle={styles.modalOverlay}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.modalBox}>
+              <Text style={styles.modalTitle}>Nombre de estilista</Text>
 
-            <TextInput
-              style={styles.modalInput}
-              placeholder="invitado_1@sovranogourmet.com"
-              value={invitadoInput}
-              onChangeText={setInvitadoInput}
-              autoCapitalize="none"
-            />
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Ej: Mario"
+                value={nombreEstilistaInput}
+                onChangeText={setNombreEstilistaInput}
+                autoCapitalize="none"
+              />
 
-            <Button_style2 title="Aceptar" onPress={handleInvitadoSubmit} />
-            <Button_style2
-              title="Cancelar"
-              onPress={() => setShowInvitadoModal(false)}
-            />
-          </View>
-        </View>
+              <Button_style2
+                title="Aceptar"
+                onPress={handleEstilistaSubmit}
+                disabled={!isFormValid}
+              />
+
+              <Button_style2
+                title="Cancelar"
+                onPress={() => {
+                  setShowEstilistaModal(false);
+                  router.replace("/login");
+                }}
+              />
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* -----------------------------------------------------
