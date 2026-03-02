@@ -11,7 +11,6 @@ import Logo from "../../components/Logo";
 import BodyText from "../../components/typography/BodyText";
 import TitleText from "../../components/typography/TitleText";
 import { auth, db } from "../../services/firestore/firebase";
-import { useStation } from "../../src/context/StationContext";
 import { logError, setUserContext } from "../../utils/logger";
 
 type Errors = { email?: string; password?: string; }; 
@@ -27,17 +26,6 @@ export default function LoginIndex() {
   const [passwordFocused, setPasswordFocused] = useState(false); 
   const firestore = getFirestore(); 
   const [isConnected, setIsConnected] = useState(true); 
-  const [privacyVisible, setPrivacyVisible] = useState(false);
-  const [isCocinaOpen, setIsCocinaOpen] = useState(true); 
-  const [closedMessage, setClosedMessage] = useState("");
-  const [stationModalVisible, setStationModalVisible] = useState(false);
-  const [stationMode, setStationMode] = useState<"guest" | "usuario" | null>(null);
-  const { setStationEmail } = useStation();
-
-const [stationValue, setStationValue] = useState(
-  "estacion_1@sovranogourmet.com"
-);
-
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {

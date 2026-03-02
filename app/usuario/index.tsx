@@ -4,10 +4,12 @@ import { signOut } from "firebase/auth";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from 'react';
 import {
+  Modal,
   StatusBar,
   StyleSheet,
   Text,
-  View
+  TextInput,
+  View,
 } from "react-native";
 import Button_style2 from "../../components/Button_style2";
 import GradientBackground from '../../components/GradientBackground';
@@ -27,21 +29,28 @@ export default function UsuarioIndex() {
   const [isCocinaOpen, setIsCocinaOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState("");
 
-  const { stationEmail } = useStation();
+  const { stationEmail, setStationEmail } = useStation();
   const params = useLocalSearchParams<{ from?: string }>();
 
   const isExpoGo = Constants.appOwnership === "expo";
 
+  // Modal state for Expo Go
+  const [showStationModal, setShowStationModal] = useState(false);
+  const [stationInput, setStationInput] = useState(
+    "estacion_1@sovranogourmet.com"
+  );
+
   // -----------------------------------------------------
-  // 🚀 1. Redirect to scanner when needed
+  // 🚀 1. Redirect to scanner OR open modal in Expo Go
   // -----------------------------------------------------
   useEffect(() => {
-    if (isExpoGo) return;
+    const shouldOpen = params.from === "login" || !stationEmail;
 
-    const shouldOpenScanner =
-      params.from === "login" || !stationEmail;
+    if (!shouldOpen) return;
 
-    if (shouldOpenScanner) {
+    if (isExpoGo) {
+      setShowStationModal(true);
+    } else {
       router.replace("/usuario/scanner");
     }
   }, [params.from, stationEmail]);
@@ -90,6 +99,16 @@ export default function UsuarioIndex() {
     } catch (error) {}
   };
 
+  // -----------------------------------------------------
+  // 🟦 Handle station submission (Expo Go only)
+  // -----------------------------------------------------
+  const handleStationSubmit = () => {
+    if (!stationInput.trim()) return;
+
+    setStationEmail(stationInput.trim());
+    setShowStationModal(false);
+  };
+
   return (
     <>
       <Stack.Screen
@@ -100,6 +119,34 @@ export default function UsuarioIndex() {
         }}
       />
 
+      {/* -----------------------------------------------------
+          🟦 Expo Go Station Email Modal
+      ----------------------------------------------------- */}
+      <Modal visible={showStationModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Ingresar estación</Text>
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="estacion_1@sovranogourmet.com"
+              value={stationInput}
+              onChangeText={setStationInput}
+              autoCapitalize="none"
+            />
+
+            <Button_style2 title="Aceptar" onPress={handleStationSubmit} />
+            <Button_style2
+              title="Cancelar"
+              onPress={() => setShowStationModal(false)}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* -----------------------------------------------------
+          MAIN UI
+      ----------------------------------------------------- */}
       <GradientBackground>
         <Logo />
 
@@ -174,5 +221,31 @@ const styles = StyleSheet.create({
     color: '#3e3e3e',
     textAlign: 'center',
     marginBottom: 16,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalBox: {
+    width: "80%",
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 12,
+    gap: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
   },
 });
