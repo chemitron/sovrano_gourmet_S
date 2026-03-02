@@ -192,7 +192,10 @@ async function addItemToOrder(item: MenuItem) {
   orderNumber,
   userUid: auth.currentUser?.uid ?? null,
 
-  // ⭐ If guest → use invitadoEmail as userEmail
+  // ⭐ Store role ALWAYS
+  role: role ?? "usuario",
+
+  // ⭐ If guest → use invitadoEmail
   userEmail: role === "guest" ? invitadoEmail : email ?? null,
 
   username: username ?? null,
@@ -203,6 +206,7 @@ async function addItemToOrder(item: MenuItem) {
   createdAt: serverTimestamp(),
   status: "pendiente",
   paymentStatus: "pendiente",
+
   items: [
     {
       itemId: item.id,
@@ -224,6 +228,9 @@ async function addItemToOrder(item: MenuItem) {
 
     await updateDoc(orderRef, {
   username: username ?? null,
+
+  // ⭐ Keep role updated
+  role: role ?? "usuario",
 
   // ⭐ Always keep invitado updated
   invitado: invitadoValue ?? null,

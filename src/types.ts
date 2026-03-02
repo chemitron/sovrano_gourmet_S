@@ -59,6 +59,7 @@ export type Order = {
   served?: boolean;
   empezada?: boolean;
   userEmail?: string;
+  role?: string;
 };
 
 export type Account = {

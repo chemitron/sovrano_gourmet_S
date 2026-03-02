@@ -24,19 +24,15 @@ export default function ChefOrdenes() {
   const [knownOrderIds, setKnownOrderIds] = useState<Set<string>>(new Set());
   const [now, setNow] = useState(Date.now());
   const getElapsed = (createdAt: any) => {
-    if (!createdAt) return "";
+  if (!createdAt) return "";
 
-    const created = createdAt.toDate().getTime();
-    const diff = Math.floor((now - created) / 1000);
+  const created = createdAt.toDate().getTime();
+  const diffMs = now - created;
 
-    const h = Math.floor(diff / 3600);
-    const m = Math.floor((diff % 3600) / 60);
-    const s = diff % 60;
+  const minutes = Math.floor(diffMs / 60000); // ⭐ minutes only
 
-    if (h > 0) return `${h}h ${m}m`;
-    if (m > 0) return `${m}m ${s}s`;
-    return `${s}s`;
-  };
+  return `${minutes}m`;
+};
 
   const isRush = (createdAt: any) => {
     if (!createdAt) return false;
@@ -64,6 +60,15 @@ export default function ChefOrdenes() {
     } catch (e) {
     }
   };
+
+const isStaffOrder = (order: Order) => {
+  const role = order.role || "";
+  return role === "empleado" || role === "admin" || role === "recepcion";
+};
+
+const staffOrders = orders.filter(isStaffOrder);
+const otherOrders = orders.filter((o) => !isStaffOrder(o));
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -187,79 +192,138 @@ export default function ChefOrdenes() {
   };
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          headerTitle: "Órdenes en Cocina",
-          headerTitleAlign: "center",
-        }}
-      />
+  <>
+    <Stack.Screen
+      options={{
+        headerTitle: "Órdenes en Cocina",
+        headerTitleAlign: "center",
+      }}
+    />
 
-      <GradientBackground>
-        <ScrollView contentContainerStyle={styles.container}>
-          {orders.length === 0 && (
-            <Text style={styles.empty}>No hay órdenes pendientes</Text>
-          )}
+    <GradientBackground>
+      <ScrollView contentContainerStyle={styles.container}>
 
-          {orders.map((order) => (
-            <View
-              key={order.id}
-              style={[
-                styles.card,
-                order.empezada && styles.cardStarted,
-                isRush(order.createdAt) && styles.cardRush,
-                order.status === "cancelado" && styles.cardCanceled,
-              ]}
-            >
-              <View style={styles.rowSplit}>
-                {/* LEFT SIDE */}
-                <View style={styles.leftSide}>
-                  <Text style={styles.headerText}>
-                    Orden #{order.orderNumber} --   {" "}
-                    {order.username ?? "Sin nombre"} --    {order.invitado?.split("@")[0]} --   {" "}
-                    {getElapsed(order.createdAt)}
-                  </Text>
+        {orders.length === 0 && (
+          <Text style={styles.empty}>No hay órdenes pendientes</Text>
+        )}
 
-                  {order.items?.map((item, i) => (
-                    <Text key={i} style={styles.item}>
-                      {item.qty} × {item.ItemName}
+        <View style={styles.columnsContainer}>
+
+          {/* LEFT COLUMN — STAFF */}
+          <View style={styles.column}>
+            <Text style={styles.columnTitle}>Empleados</Text>
+
+            {staffOrders.map((order) => (
+              <View
+                key={order.id}
+                style={[
+                  styles.card,
+                  order.empezada && styles.cardStarted,
+                  isRush(order.createdAt) && styles.cardRush,
+                  order.status === "cancelado" && styles.cardCanceled,
+                ]}
+              >
+                <View style={styles.rowSplit}>
+                  <View style={styles.leftSide}>
+                    <Text style={styles.headerText}>
+                      Orden #{order.orderNumber} — {order.username ?? "Sin nombre"} —{" "}
+                      {order.invitado?.split("@")[0]} — {getElapsed(order.createdAt)}
                     </Text>
-                  ))}
-                </View>
 
-                {/* RIGHT SIDE — CLEAN, NO DUPLICATES */}
-                <View style={styles.rightSide}>
-                  {/* CANCELED */}
-                  {order.status === "cancelado" && (
-                    <Button_style2
-                      title="Cancelada"
-                      onPress={() => markCancelada(order.id)}
-                    />
-                  )}
+                    {order.items?.map((item, i) => (
+                      <Text key={i} style={styles.item}>
+                        {item.qty} × {item.ItemName}
+                      </Text>
+                    ))}
+                  </View>
 
-                  {/* NOT STARTED */}
-                  {!order.empezada && order.status !== "cancelado" && (
-                    <Button_style2
-                      title="Empezada"
-                      onPress={() => markStarted(order.id)}
-                    />
-                  )}
+                  <View style={styles.rightSide}>
+                    {order.status === "cancelado" && (
+                      <Button_style2
+                        title="Cancelada"
+                        onPress={() => markCancelada(order.id)}
+                      />
+                    )}
 
-                  {/* STARTED */}
-                  {order.empezada && order.status !== "cancelado" && (
-                    <Button_style2
-                      title="Servida"
-                      onPress={() => markServida(order.id, order.createdAt)}
-                    />
-                  )}
+                    {!order.empezada && order.status !== "cancelado" && (
+                      <Button_style2
+                        title="Empezada"
+                        onPress={() => markStarted(order.id)}
+                      />
+                    )}
+
+                    {order.empezada && order.status !== "cancelado" && (
+                      <Button_style2
+                        title="Servida"
+                        onPress={() => markServida(order.id, order.createdAt)}
+                      />
+                    )}
+                  </View>
                 </View>
               </View>
-            </View>
-          ))}
-        </ScrollView>
-      </GradientBackground>
-    </>
-  );
+            ))}
+          </View>
+
+          {/* RIGHT COLUMN — OTHERS */}
+          <View style={styles.column}>
+            <Text style={styles.columnTitle}>Clientes</Text>
+
+            {otherOrders.map((order) => (
+              <View
+                key={order.id}
+                style={[
+                  styles.card,
+                  order.empezada && styles.cardStarted,
+                  isRush(order.createdAt) && styles.cardRush,
+                  order.status === "cancelado" && styles.cardCanceled,
+                ]}
+              >
+                <View style={styles.rowSplit}>
+                  <View style={styles.leftSide}>
+                    <Text style={styles.headerText}>
+                      Orden #{order.orderNumber} — {order.username ?? "Sin nombre"} —{" "}
+                      {order.invitado?.split("@")[0]} — {getElapsed(order.createdAt)}
+                    </Text>
+
+                    {order.items?.map((item, i) => (
+                      <Text key={i} style={styles.item}>
+                        {item.qty} × {item.ItemName}
+                      </Text>
+                    ))}
+                  </View>
+
+                  <View style={styles.rightSide}>
+                    {order.status === "cancelado" && (
+                      <Button_style2
+                        title="Cancelada"
+                        onPress={() => markCancelada(order.id)}
+                      />
+                    )}
+
+                    {!order.empezada && order.status !== "cancelado" && (
+                      <Button_style2
+                        title="Empezada"
+                        onPress={() => markStarted(order.id)}
+                      />
+                    )}
+
+                    {order.empezada && order.status !== "cancelado" && (
+                      <Button_style2
+                        title="Servida"
+                        onPress={() => markServida(order.id, order.createdAt)}
+                      />
+                    )}
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+
+        </View>
+      </ScrollView>
+    </GradientBackground>
+  </>
+);
 }
 
 const styles = StyleSheet.create({
@@ -313,4 +377,20 @@ const styles = StyleSheet.create({
     borderColor: "#ff4444",
     borderWidth: 2,
   },
+  columnsContainer: {
+  flexDirection: "row",
+  gap: 20,
+},
+
+column: {
+  flex: 1,
+},
+
+columnTitle: {
+  fontSize: 18,
+  fontWeight: "700",
+  marginBottom: 10,
+  textAlign: "center",
+  color: "#333",
+},
 });
