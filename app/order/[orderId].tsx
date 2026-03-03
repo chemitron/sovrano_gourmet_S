@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import Button_style2 from "../../components/Button_style2";
+import { auth } from "../../services/firestore/firebase";
 
 export default function OrderScreen() {
   const { orderId } = useLocalSearchParams<{ orderId: string }>();
@@ -19,6 +20,21 @@ export default function OrderScreen() {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [orderNumber, setOrderNumber] = useState<number | null>(null);
+
+  // ⭐ Load user role
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadRole = async () => {
+      const token = await auth.currentUser?.getIdTokenResult();
+      const roleClaim = token?.claims.role as string | undefined;
+      setRole(roleClaim ?? null);
+    };
+    loadRole();
+  }, []);
+
+  const isEmpleado = role === "empleado";
+  const isUsuario = role === "usuario" || role === "guest" || role === "invitado";
 
   // ---------------------------
   // LOAD ORDER (EXCLUDE CANCELADO)
@@ -31,7 +47,6 @@ export default function OrderScreen() {
     const unsub = onSnapshot(ref, (snap) => {
       const data = snap.data();
 
-      // ⭐ If order is missing or cancelled, block the screen
       if (!data || data.status === "cancelado") {
         setOrder(null);
         setLoading(false);
@@ -92,6 +107,44 @@ export default function OrderScreen() {
     await updateDoc(doc(db, "orders", orderId), {
       items: updatedItems,
     });
+  }
+
+  // ---------------------------
+  // HANDLE CUENTA PERSONAL
+  // ---------------------------
+  async function handleCuentaPersonal() {
+    if (!orderId || !order) return;
+
+    // EMPLEADO FLOW
+    if (isEmpleado) {
+      await updateDoc(doc(db, "orders", orderId), {
+        paymentMethod: "cuenta-personal-empleado",
+        accountPaid: false,
+        userEmail: auth.currentUser?.email ?? null,
+      });
+
+      router.push({
+        pathname: "/empleado/cuenta-personal",
+        params: { orderId },
+      });
+      return;
+    }
+
+    // USUARIO / INVITADO FLOW
+    if (isUsuario) {
+      const invitadoId = order.invitado?.trim().toLowerCase() ?? null;
+
+      await updateDoc(doc(db, "orders", orderId), {
+        paymentMethod: "cuenta-personal-invitado",
+        accountPaid: false,
+        invitado: invitadoId,
+      });
+
+      router.push({
+        pathname: "/usuario/cuenta-personal",
+        params: { orderId, invitado: invitadoId },
+      });
+    }
   }
 
   // ---------------------------
@@ -182,13 +235,8 @@ export default function OrderScreen() {
         <Text style={styles.total}>Total: ${total.toFixed(2)}</Text>
 
         <Button_style2
-          title="Pagar"
-          onPress={() =>
-            router.push({
-              pathname: "/order/[orderId]/checkout",
-              params: { orderId },
-            })
-          }
+          title="Pagar con cuenta personal"
+          onPress={handleCuentaPersonal}
         />
       </View>
     </>

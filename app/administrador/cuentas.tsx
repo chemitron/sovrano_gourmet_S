@@ -55,7 +55,8 @@ export default function AdminCuentasScreen() {
         collection(db, "orders"),
         where("invitado", "==", acc.email),
         where("chargedToAccount", "==", true),
-        where("accountPaid", "==", false)
+        where("accountPaid", "==", false),
+        where("status", "!=", "cancelado")
       );
 
       const unsub = onSnapshot(q, (snap) => {
