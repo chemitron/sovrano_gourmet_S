@@ -199,6 +199,29 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
     playCancelSound();
   };
 
+  // ⭐ Sorting helpers
+const sortByUsername = (a: Order, b: Order) => {
+  const nameA = (a.username ?? "").trim().toLowerCase();
+  const nameB = (b.username ?? "").trim().toLowerCase();
+  return nameA.localeCompare(nameB);
+};
+
+const sortByClientName = (a: Order, b: Order) => {
+  const nameA = (
+    a.username?.trim() ||
+    a.nombreInvitado ||
+    "Sin nombre"
+  ).toLowerCase();
+
+  const nameB = (
+    b.username?.trim() ||
+    b.nombreInvitado ||
+    "Sin nombre"
+  ).toLowerCase();
+
+  return nameA.localeCompare(nameB);
+};
+
   return (
   <>
     <Stack.Screen
@@ -221,7 +244,7 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
           <View style={styles.column}>
             <Text style={styles.columnTitle}>Empleados</Text>
 
-            {staffOrders.map((order) => (
+            {[...staffOrders].sort(sortByUsername).map((order) => (
               <View
                 key={order.id}
                 style={[
@@ -275,7 +298,7 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
           <View style={styles.column}>
             <Text style={styles.columnTitle}>Clientes</Text>
 
-            {otherOrders.map((order) => (
+            {[...otherOrders].sort(sortByClientName).map((order) => (
               <View
                 key={order.id}
                 style={[

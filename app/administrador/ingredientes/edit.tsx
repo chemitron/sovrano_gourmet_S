@@ -153,7 +153,7 @@ export default function EditIngredient() {
             keyboardType="numeric"
           />
 
-          <Text style={styles.label}>Stock</Text>
+          <Text style={styles.label}>Cantidad</Text>
           <TextInput
             style={styles.input}
             value={stock}
@@ -161,7 +161,7 @@ export default function EditIngredient() {
             keyboardType="numeric"
           />
 
-          <Text style={styles.label}>Stock mínimo</Text>
+          <Text style={styles.label}>Cantidad mínimo</Text>
           <TextInput
             style={styles.input}
             value={minStock}

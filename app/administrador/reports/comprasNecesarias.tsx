@@ -66,11 +66,11 @@ export default function ComprasNecesarias() {
               <Text style={styles.name}>{ing.name}</Text>
 
               <Text style={styles.detail}>
-                Stock actual: <Text style={styles.bold}>{ing.stock}</Text> {ing.unit}
+                Inventario actual: <Text style={styles.bold}>{ing.stock}</Text> {ing.unit}
               </Text>
 
               <Text style={styles.detail}>
-                Stock mínimo: <Text style={styles.bold}>{ing.minStock}</Text> {ing.unit}
+                Inventario mínimo: <Text style={styles.bold}>{ing.minStock}</Text> {ing.unit}
               </Text>
 
               <Text style={styles.urgent}>

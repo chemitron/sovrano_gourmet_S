@@ -145,7 +145,7 @@ export default function NewIngredient() {
           />
 
           {/* STOCK */}
-          <Text style={styles.label}>Stock inicial</Text>
+          <Text style={styles.label}>Cantidad inicial</Text>
           <TextInput
             style={styles.input}
             value={stock}
@@ -154,7 +154,7 @@ export default function NewIngredient() {
           />
 
           {/* MIN STOCK */}
-          <Text style={styles.label}>Stock mínimo</Text>
+          <Text style={styles.label}>Cantidad mínima</Text>
           <TextInput
             style={styles.input}
             value={minStock}

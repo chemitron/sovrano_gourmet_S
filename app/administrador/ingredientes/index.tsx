@@ -86,7 +86,7 @@ export default function IngredientsAdmin() {
                 </View>
 
                 <Text style={styles.sub}>
-                  Stock: {ing.stock} • Min: {ing.minStock} • Costo: $
+                  Inventario: {ing.stock} • Min: {ing.minStock} • Costo: $
                   {ing.cost.toFixed(2)}
                 </Text>
 

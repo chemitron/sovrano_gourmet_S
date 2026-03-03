@@ -156,7 +156,7 @@ export default function ReplenishmentScreen() {
               </View>
 
               <Text style={styles.sub}>
-                Stock: {ing.stock} • Min: {ing.minStock}
+                Inventario: {ing.stock} • Min: {ing.minStock}
               </Text>
             </TouchableOpacity>
           ))}
