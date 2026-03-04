@@ -34,6 +34,10 @@ export default function Confirmacion() {
       ? "/empleado"
       : role === "guest"
       ? "/invitado"
+      : role === "recepcion"
+      ? "/recepcion"
+      : role === "chef"
+      ? "/chef"
       : "/login";
 
   const goHome = () => {

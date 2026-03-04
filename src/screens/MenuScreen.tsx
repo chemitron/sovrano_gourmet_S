@@ -201,9 +201,9 @@ async function addItemToOrder(item: MenuItem) {
   role: role ?? "usuario",
 
   // ⭐ If guest → use invitadoEmail
-  userEmail: role === "guest" ? invitadoEmail : email ?? null,
+  userEmail: role === "invitado" ? invitadoEmail : email ?? null,
 
-  username: username ?? null,
+  username: role === "invitado" ? invitadoEmail?.replace("@sovranogourmet.com", "") ?? null : (email?.split("@")[0] ?? null),
 
   // ⭐ Always store invitado
   invitado: invitadoValue ?? null,

@@ -59,7 +59,7 @@ export default function RecepcionCuentas() {
     // guest → invitado
     // usuario, empleado, admin, chef, recepcion → userEmail
     const field =
-      role === "guest"
+      role === "invitado"
         ? "invitado"
         : "userEmail";
 

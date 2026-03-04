@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from "react";
 
 type InvitadoContextType = {
+  role: string | null; setRole: (role: string | null) => void;
   invitadoEmail: string | null;
   setInvitadoEmail: (email: string | null) => void;
   nombreInvitado: string | null;
@@ -15,12 +16,33 @@ export const InvitadoProvider = ({ children }: { children: React.ReactNode }) =>
   const [invitadoEmail, setInvitadoEmail] = useState<string | null>(null);
   const [nombreInvitado, setNombreInvitado] = useState<string | null>(null);
   const [nombreEstilista, setNombreEstilista] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
 
   return (
-    <InvitadoContext.Provider value={{ invitadoEmail, setInvitadoEmail, nombreInvitado, setNombreInvitado, nombreEstilista, setNombreEstilista }}>
+    <InvitadoContext.Provider
+    value={{
+    role,
+    setRole,
+    invitadoEmail,
+    setInvitadoEmail,
+    nombreInvitado,
+    setNombreInvitado,
+    nombreEstilista,
+    setNombreEstilista,
+  }}
+>
+
       {children}
     </InvitadoContext.Provider>
   );
+};
+
+export const useRole = () => {
+  const context = useContext(InvitadoContext);
+  if (!context) {
+    throw new Error("useRole must be used within an InvitadoProvider");
+  }
+  return { role: context.role, setRole: context.setRole };
 };
 
 export const useInvitado = () => {

@@ -13,7 +13,7 @@ import {
   where,
 } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from "react-native";
 import Button_style2 from "../../components/Button_style2";
 import GradientBackground from "../../components/GradientBackground";
 import { db } from "../../services/firestore/firebase";
@@ -24,6 +24,9 @@ export default function ChefOrdenes() {
   const knownOrderIdsRef = useRef<Set<string>>(new Set());
   const [knownOrderIds, setKnownOrderIds] = useState<Set<string>>(new Set());
   const [now, setNow] = useState(Date.now());
+  const [commentModalVisible, setCommentModalVisible] = useState(false);
+  const [selectedComment, setSelectedComment] = useState<string | null>(null);
+
   const getElapsed = (createdAt: any) => {
   if (!createdAt) return "";
 
@@ -231,6 +234,26 @@ const sortByClientName = (a: Order, b: Order) => {
       }}
     />
 
+    <Modal visible={commentModalVisible} transparent animationType="fade">
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalBox}>
+      <Text style={styles.modalTitle}>Comentario</Text>
+
+      <Text style={styles.modalContent}>
+        {selectedComment}
+      </Text>
+
+      <Button_style2
+        title="Cerrar"
+        onPress={() => {
+          setCommentModalVisible(false);
+          setSelectedComment(null);
+        }}
+      />
+    </View>
+  </View>
+</Modal>
+
     <GradientBackground>
       <ScrollView contentContainerStyle={styles.container}>
 
@@ -261,10 +284,24 @@ const sortByClientName = (a: Order, b: Order) => {
                     </Text>
 
                     {order.items?.map((item, i) => (
-                      <Text key={i} style={styles.item}>
-                        {item.qty} × {item.ItemName}
-                      </Text>
-                    ))}
+  <View key={i} style={styles.itemRow}>
+    <Text style={styles.item}>
+      {item.qty} × {item.ItemName}
+    </Text>
+
+    {item.comentario && item.comentario.trim() !== "" && (
+      <TouchableOpacity
+        onPress={() => {
+          setSelectedComment(item.comentario);
+          setCommentModalVisible(true);
+        }}
+      >
+        <Text style={styles.commentLink}>Comentario</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+))}
+
                   </View>
 
                   <View style={styles.rightSide}>
@@ -318,10 +355,24 @@ const sortByClientName = (a: Order, b: Order) => {
                     </Text>
 
                     {order.items?.map((item, i) => (
-                      <Text key={i} style={styles.item}>
-                        {item.qty} × {item.ItemName}
-                      </Text>
-                    ))}
+  <View key={i} style={styles.itemRow}>
+    <Text style={styles.item}>
+      {item.qty} × {item.ItemName}
+    </Text>
+
+    {item.comentario && item.comentario.trim() !== "" && (
+      <TouchableOpacity
+        onPress={() => {
+          setSelectedComment(item.comentario);
+          setCommentModalVisible(true);
+        }}
+      >
+        <Text style={styles.commentLink}>Comentario</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+))}
+
                   </View>
 
                   <View style={styles.rightSide}>
@@ -424,5 +475,56 @@ columnTitle: {
   marginBottom: 10,
   textAlign: "center",
   color: "#333",
+},
+itemComment: {
+  fontSize: 14,
+  fontStyle: "italic",
+  color: "#333",
+  marginLeft: 4,
+  marginTop: 2,
+  textDecorationLine: "underline",
+},
+
+modalOverlay: {
+  flex: 1,
+  backgroundColor: "rgba(0,0,0,0.4)",
+  justifyContent: "center",
+  alignItems: "center",
+},
+
+modalBox: {
+  width: "80%",
+  backgroundColor: "white",
+  padding: 20,
+  borderRadius: 12,
+  gap: 16,
+},
+
+modalTitle: {
+  fontSize: 20,
+  fontWeight: "700",
+  textAlign: "center",
+  marginBottom: 10,
+},
+
+modalContent: {
+  fontSize: 16,
+  color: "#333",
+  marginBottom: 20,
+  textAlign: "center",
+},
+commentLink: {
+  fontSize: 14,
+  fontWeight: "600",
+  color: "#2a4d9b",
+  textDecorationLine: "underline",
+  marginTop: 2,
+  marginLeft: 4,
+},
+itemRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 10,
+  marginBottom: 4,
 },
 });
