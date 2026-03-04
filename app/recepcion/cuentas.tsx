@@ -2,6 +2,7 @@ import { router, Stack, useLocalSearchParams } from "expo-router";
 import {
   collection,
   doc,
+  getDoc,
   onSnapshot,
   query,
   updateDoc,
@@ -18,7 +19,7 @@ import {
 } from "react-native";
 import Button_style2 from "../../components/Button_style2";
 import GradientBackground from "../../components/GradientBackground";
-import { db } from "../../services/firestore/firebase";
+import { auth, db } from "../../services/firestore/firebase";
 
 export default function RecepcionCuentas() {
   const { invitado } = useLocalSearchParams<{ invitado: string }>();
@@ -26,16 +27,72 @@ export default function RecepcionCuentas() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const [role, setRole] = useState<string | null>(null);
+  const [uid, setUid] = useState<string | null>(null);
+  const [balance, setBalance] = useState<number>(0);
 
   // -----------------------------------------------------
-  // 🔥 Load unpaid orders for this invitado
+  // 👤 Load user role
   // -----------------------------------------------------
   useEffect(() => {
-    if (!invitado) return;
+    const loadData = async () => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+
+      const currentUid = currentUser.uid;
+      setUid(currentUid);
+
+      const userDoc = await getDoc(doc(db, "users", currentUid));
+      const fetchedRole = userDoc.data()?.role;
+      setRole(fetchedRole);
+    };
+
+    loadData();
+  }, []);
+
+  // -----------------------------------------------------
+  // 💰 Load balance from cuentas_personales
+  // -----------------------------------------------------
+  useEffect(() => {
+    if (!invitado || !role) return;
+
+    // guest → invitado
+    // usuario, empleado, admin, chef, recepcion → userEmail
+    const field =
+      role === "guest"
+        ? "invitado"
+        : "userEmail";
+
+    // The document ID in cuentas_personales is always the email
+    const accountEmail = invitado;
+
+    const ref = doc(db, "cuentas_personales", accountEmail);
+
+    const unsub = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        setBalance(snap.data().balance ?? 0);
+      } else {
+        setBalance(0);
+      }
+    });
+
+    return () => unsub();
+  }, [invitado, role]);
+
+  // -----------------------------------------------------
+  // 🔥 Load unpaid orders for this invitado/userEmail
+  // -----------------------------------------------------
+  useEffect(() => {
+    if (!invitado || !role) return;
+
+    const field =
+      role === "guest"
+        ? "invitado"
+        : "userEmail";
 
     const q = query(
       collection(db, "orders"),
-      where("invitado", "==", invitado),
+      where(field, "==", invitado),
       where("accountPaid", "==", false),
       where("status", "!=", "cancelado")
     );
@@ -51,18 +108,7 @@ export default function RecepcionCuentas() {
     });
 
     return () => unsub();
-  }, [invitado]);
-
-  // -----------------------------------------------------
-  // 💰 Compute total balance
-  // -----------------------------------------------------
-  const totalBalance = orders.reduce((sum, order) => {
-    const orderTotal = order.items?.reduce(
-      (acc: number, item: any) => acc + item.price * item.qty,
-      0
-    );
-    return sum + orderTotal;
-  }, 0);
+  }, [invitado, role]);
 
   // -----------------------------------------------------
   // 🟦 Mark all orders as paid
@@ -73,8 +119,16 @@ export default function RecepcionCuentas() {
         const ref = doc(db, "orders", order.id);
         await updateDoc(ref, {
           accountPaid: true,
+          paidAt: new Date(),
+          paymentStatus: "pagado",
+          status: "pagado",
         });
       }
+
+      // Reset balance in Firestore
+      await updateDoc(doc(db, "cuentas_personales", invitado), {
+        balance: 0,
+      });
 
       setConfirmVisible(false);
       router.back();
@@ -130,7 +184,7 @@ export default function RecepcionCuentas() {
           </Text>
 
           <Text style={styles.balanceText}>
-            Balance actual: ${totalBalance.toFixed(2)}
+            Balance actual: ${balance.toFixed(2)}
           </Text>
 
           {orders.length === 0 && (

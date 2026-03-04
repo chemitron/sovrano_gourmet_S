@@ -49,31 +49,40 @@ export default function AdminCuentasScreen() {
 }, []);
 
   // ⭐ Load orders for each account
-  useEffect(() => {
-    accounts.forEach((acc) => {
-      const q = query(
-        collection(db, "orders"),
-        where("invitado", "==", acc.email),
-        where("chargedToAccount", "==", true),
-        where("accountPaid", "==", false),
-        where("status", "!=", "cancelado")
-      );
+useEffect(() => {
+  accounts.forEach((acc) => {
+    // Determine which field to filter by
+    // guest → invitado
+    // usuario, empleado, admin, chef, recepcion → userEmail
+    const field =
+      acc.username?.toLowerCase() === "guest" ||
+      acc.username?.toLowerCase() === "invitado"
+        ? "invitado"
+        : "userEmail";
 
-      const unsub = onSnapshot(q, (snap) => {
-        const list = snap.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        })) as Order[];
+    const q = query(
+      collection(db, "orders"),
+      where(field, "==", acc.email),
+      where("chargedToAccount", "==", true),
+      where("accountPaid", "==", false),
+      where("status", "!=", "cancelado")
+    );
 
-        setOrders((prev) => ({
-          ...prev,
-          [acc.email]: list,
-        }));
-      });
+    const unsub = onSnapshot(q, (snap) => {
+      const list = snap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      })) as Order[];
 
-      return () => unsub();
+      setOrders((prev) => ({
+        ...prev,
+        [acc.email]: list,
+      }));
     });
-  }, [accounts]);
+
+    return () => unsub();
+  });
+}, [accounts]);
 
   // ⭐ Mark account as paid
   const markAsPaid = async (email: string) => {

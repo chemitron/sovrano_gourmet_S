@@ -1,3 +1,4 @@
+import Constants from "expo-constants";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { signOut } from "firebase/auth";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
@@ -33,6 +34,8 @@ export default function UsuarioIndex() {
   const { nombreEstilista, setNombreEstilista } = useNombreEstilista();
   const params = useLocalSearchParams<{ from?: string }>();
 
+  const isExpoGo = Constants.appOwnership === "expo";
+
   // Modal state
   const [showEstilistaModal, setShowEstilistaModal] = useState(false);
   const [nombreEstilistaInput, setNombreEstilistaInput] = useState("");
@@ -45,7 +48,6 @@ export default function UsuarioIndex() {
 
     if (!shouldOpen) return;
 
-    // Always show modal first
     setShowEstilistaModal(true);
   }, [params.from, nombreEstilista]);
 
@@ -102,8 +104,13 @@ export default function UsuarioIndex() {
     setNombreEstilista(nombreEstilistaInput.trim());
     setShowEstilistaModal(false);
 
-    // Now open scanner
-    router.replace("/usuario/scanner");
+    // ⭐ Expo Go → stay on this screen, user taps "Ver menú"
+    if (isExpoGo) {
+      return;
+    }
+
+    // ⭐ Real build → open scanner
+    router.push("/usuario/scanner");
   };
 
   const isFormValid = nombreEstilistaInput.trim().length > 0;
@@ -160,7 +167,7 @@ export default function UsuarioIndex() {
       </Modal>
 
       {/* -----------------------------------------------------
-          MAIN UI
+          MAIN UI (UNCHANGED)
       ----------------------------------------------------- */}
       <GradientBackground>
         <Logo />

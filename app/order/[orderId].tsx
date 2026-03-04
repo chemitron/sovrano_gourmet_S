@@ -5,8 +5,10 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
+  Modal,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -24,6 +26,11 @@ export default function OrderScreen() {
   // ⭐ Load user role
   const [role, setRole] = useState<string | null>(null);
 
+  // ⭐ Comment modal state
+  const [commentModalVisible, setCommentModalVisible] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
   useEffect(() => {
     const loadRole = async () => {
       const token = await auth.currentUser?.getIdTokenResult();
@@ -32,9 +39,6 @@ export default function OrderScreen() {
     };
     loadRole();
   }, []);
-
-  const isEmpleado = role === "empleado";
-  const isUsuario = role === "usuario" || role === "guest" || role === "invitado";
 
   // ---------------------------
   // LOAD ORDER (EXCLUDE CANCELADO)
@@ -110,42 +114,53 @@ export default function OrderScreen() {
   }
 
   // ---------------------------
+  // ⭐ SAVE COMMENT
+  // ---------------------------
+  async function saveComment() {
+    if (selectedIndex === null || !orderId || !order) return;
+
+    const updatedItems = [...order.items];
+    updatedItems[selectedIndex].comentario = commentText.trim();
+
+    await updateDoc(doc(db, "orders", orderId), {
+      items: updatedItems,
+    });
+
+    setCommentModalVisible(false);
+    setCommentText("");
+    setSelectedIndex(null);
+  }
+
+  // ---------------------------
   // HANDLE CUENTA PERSONAL
   // ---------------------------
   async function handleCuentaPersonal() {
-    if (!orderId || !order) return;
+  if (!orderId || !order) return;
 
-    // EMPLEADO FLOW
-    if (isEmpleado) {
-      await updateDoc(doc(db, "orders", orderId), {
-        paymentMethod: "cuenta-personal-empleado",
-        accountPaid: false,
-        userEmail: auth.currentUser?.email ?? null,
-      });
+  // Determine which field to use
+  const field = role === "guest" ? "invitado" : "userEmail";
 
-      router.push({
-        pathname: "/empleado/cuenta-personal",
-        params: { orderId },
-      });
-      return;
-    }
+  // Normalize the value
+  const value =
+    field === "invitado"
+      ? order.invitado?.trim().toLowerCase() ?? null
+      : auth.currentUser?.email?.trim().toLowerCase() ?? null;
 
-    // USUARIO / INVITADO FLOW
-    if (isUsuario) {
-      const invitadoId = order.invitado?.trim().toLowerCase() ?? null;
+  // Update Firestore
+  await updateDoc(doc(db, "orders", orderId), {
+    paymentMethod:
+      field === "invitado"
+        ? "cuenta-personal-invitado"
+        : "cuenta-personal-empleado",
+    accountPaid: false,
+    [field]: value,
+  });
 
-      await updateDoc(doc(db, "orders", orderId), {
-        paymentMethod: "cuenta-personal-invitado",
-        accountPaid: false,
-        invitado: invitadoId,
-      });
-
-      router.push({
-        pathname: "/usuario/cuenta-personal",
-        params: { orderId, invitado: invitadoId },
-      });
-    }
-  }
+    router.push({
+      pathname: "/usuario/cuenta-personal",
+      params: { orderId, invitado: value },
+    });
+}
 
   // ---------------------------
   // LOADING OR CANCELLED
@@ -189,6 +204,33 @@ export default function OrderScreen() {
         }}
       />
 
+      {/* ⭐ COMMENT MODAL */}
+      <Modal visible={commentModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Comentario</Text>
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Escribe un comentario..."
+              value={commentText}
+              onChangeText={setCommentText}
+              multiline
+            />
+
+            <Button_style2 title="Guardar" onPress={saveComment} />
+            <Button_style2
+              title="Cancelar"
+              onPress={() => {
+                setCommentModalVisible(false);
+                setCommentText("");
+                setSelectedIndex(null);
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
+
       <View style={{ flex: 1, padding: 20 }}>
         <Text style={styles.title}>Orden #{orderNumber ?? "..."}</Text>
 
@@ -209,23 +251,44 @@ export default function OrderScreen() {
                     <Text style={styles.itemDetails}>${item.price}</Text>
                   </View>
 
-                  <View style={styles.qtyRow}>
-                    <TouchableOpacity
-                      style={styles.qtyButton}
-                      onPress={() => decreaseQty(index)}
-                    >
-                      <Text style={styles.qtyButtonText}>−</Text>
-                    </TouchableOpacity>
+                  <View style={styles.qtyCommentRow}>
+                    {/* QTY BUTTONS */}
+                    <View style={styles.qtyRow}>
+                      <TouchableOpacity
+                        style={styles.qtyButton}
+                        onPress={() => decreaseQty(index)}
+                      >
+                        <Text style={styles.qtyButtonText}>−</Text>
+                      </TouchableOpacity>
 
-                    <Text style={styles.qtyValue}>{item.qty}</Text>
+                      <Text style={styles.qtyValue}>{item.qty}</Text>
 
+                      <TouchableOpacity
+                        style={styles.qtyButton}
+                        onPress={() => increaseQty(index)}
+                      >
+                        <Text style={styles.qtyButtonText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* COMMENT BUTTON */}
                     <TouchableOpacity
-                      style={styles.qtyButton}
-                      onPress={() => increaseQty(index)}
+                      onPress={() => {
+                        setSelectedIndex(index);
+                        setCommentText(item.comentario ?? "");
+                        setCommentModalVisible(true);
+                      }}
                     >
-                      <Text style={styles.qtyButtonText}>+</Text>
+                      <Text style={styles.commentButton}>Comentario</Text>
                     </TouchableOpacity>
                   </View>
+
+                  {/* EXISTING COMMENT */}
+                  {item.comentario && (
+                    <Text style={styles.commentText}>
+                      {item.comentario}
+                    </Text>
+                  )}
                 </View>
               </View>
             </View>
@@ -291,10 +354,16 @@ const styles = StyleSheet.create({
     color: "#444",
   },
 
-  qtyRow: {
+  qtyCommentRow: {
     flexDirection: "row",
     alignItems: "center",
     marginTop: 10,
+    justifyContent: "space-between",
+  },
+
+  qtyRow: {
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   qtyButton: {
@@ -316,5 +385,48 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginHorizontal: 12,
+  },
+
+  commentButton: {
+    marginLeft: 12,
+    color: "#2a4d9b",
+    fontWeight: "600",
+    textDecorationLine: "underline",
+  },
+
+  commentText: {
+    marginTop: 6,
+    fontStyle: "italic",
+    color: "#333",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalBox: {
+    width: "80%",
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 12,
+    gap: 16,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    minHeight: 80,
+    textAlignVertical: "top",
   },
 });

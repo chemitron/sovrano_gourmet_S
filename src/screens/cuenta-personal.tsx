@@ -56,9 +56,9 @@ export default function CuentaPersonalScreen() {
   const empleadoEmail = auth.currentUser?.email ?? null;
 
   const email =
-    role === "empleado"
-      ? empleadoEmail
-      : invitadoEmail;
+  role === "guest"
+    ? invitadoEmail
+    : empleadoEmail;
 
   // ---------------------------
   // Load balance
@@ -81,28 +81,33 @@ export default function CuentaPersonalScreen() {
   // Load unpaid orders
   // ---------------------------
   useEffect(() => {
-    if (!email) return;
+  if (!email || !role) return;
 
-    const q = query(
-      collection(db, "orders"),
-      where("invitado", "==", email),
-      where("accountPaid", "==", false),
-      orderBy("createdAt", "desc")
-    );
+  // Determine which field to filter by
+  const field =
+  role === "guest"
+    ? "invitado"
+    : "userEmail";
 
-    const unsub = onSnapshot(q, (snap) => {
-      const list = snap.docs.map((d) => {
-        const data = d.data() as Omit<Order, "id">;
-        return { id: d.id, ...data };
-      }) as Order[];
+  const q = query(
+    collection(db, "orders"),
+    where(field, "==", email),
+    where("accountPaid", "==", false),
+    orderBy("createdAt", "desc")
+  );
 
-      setOrders(
-  list.filter((o) => o.status !== "cancelado")
-);
-    });
+  const unsub = onSnapshot(q, (snap) => {
+    const list = snap.docs.map((d) => {
+      const data = d.data() as Omit<Order, "id">;
+      return { id: d.id, ...data };
+    }) as Order[];
 
-    return () => unsub();
-  }, [email]);
+    // Extra safety: exclude cancelled
+    setOrders(list.filter((o) => o.status !== "cancelado"));
+  });
+
+  return () => unsub();
+}, [email, role]);
 
   // ---------------------------
   // Cancel order
