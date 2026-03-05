@@ -35,7 +35,7 @@ export default function ScannerScreen({
       </View>
     );
   }
-
+//to save new comit
   useEffect(() => {
 
     if (!permission?.granted) {
