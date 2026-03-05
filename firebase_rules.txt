@@ -45,7 +45,7 @@ service cloud.firestore {
       allow create: if request.auth != null;
 
       allow read: if request.auth != null && (
-        resource.data.estacion != null ||
+        resource.data.invitado != null ||
         (request.auth.token.email != null &&
          resource.data.userEmail != null &&
          request.auth.token.email == resource.data.userEmail) ||
@@ -54,7 +54,7 @@ service cloud.firestore {
       );
 
       allow update: if request.auth != null && (
-        resource.data.estacion != null ||
+        resource.data.invitado != null ||
         request.auth.uid == resource.data.userUid ||
         isEmpleado() || isAdmin() || isChef() || isRecepcion()
       );
