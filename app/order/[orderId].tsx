@@ -138,7 +138,7 @@ export default function OrderScreen() {
   if (!orderId || !order) return;
 
   // Determine which field to use
-  const field = role === "guest" ? "invitado" : "userEmail";
+  const field = role === "invitado" ? "invitado" : "userEmail";
 
   // Normalize the value
   const value =

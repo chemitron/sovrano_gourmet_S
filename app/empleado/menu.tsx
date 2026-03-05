@@ -34,9 +34,6 @@ export default function EmleadoMenu() {
   }, []);
 
   return <MenuScreen 
-    role="empleado" 
-    email={email}
-    username={username}
     />;
 }
 

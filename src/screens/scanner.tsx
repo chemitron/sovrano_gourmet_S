@@ -5,15 +5,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { useInvitado } from "../context/InvitadoContext";
 
-export default function ScannerScreen({
-  role,
-  email,
-  username,
-}: {
-  role?: string;
-  email?: string | null;
-  username?: string | null;
-}) {
+export default function ScannerScreen({ role }: { role?: string }) {
 
   const { setInvitadoEmail } = useInvitado();
   const [permission, requestPermission] = useCameraPermissions();
@@ -67,7 +59,7 @@ export default function ScannerScreen({
         return parsed.invitadoEmail || parsed.invitado || null;
       }
 
-      if (data.includes("inivtado=")) {
+      if (data.includes("invitado=")) {
         const extracted = data.split("invitado=")[1];
         return extracted;
       }
@@ -93,7 +85,7 @@ export default function ScannerScreen({
     const invitado = extractInvitado(data);
 
     if (invitado) {
-      setInvitadoEmail(invitado);
+      setInvitadoEmail(invitado.trim().toLowerCase());
 
       if (role === "invitado") {
         router.replace("/invitado");

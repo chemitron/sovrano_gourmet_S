@@ -35,54 +35,62 @@ export default function LoginIndex() {
   }, []);
 
   const handleGuestLogin = async () => {
-    if (!isConnected) {
-      Alert.alert("Error", "No hay conexión a internet. No se pudo iniciar sesión como invitado.");
-      return;
-    }
-    try {
-      setLoading(true);
-      setLoadingMessage('Iniciando sesión como invitado...'); // 👈 overlay text for guest
+  if (!isConnected) {
+    Alert.alert("Error", "No hay conexión a internet. No se pudo iniciar sesión como invitado.");
+    return;
+  }
 
-      const result = await signInAnonymously(auth);
-      const user = result.user;
+  try {
+    setLoading(true);
+    setLoadingMessage("Iniciando sesión como invitado...");
 
-      // Create a Firestore doc for the guest if needed
-      await setDoc(doc(db, "users", user.uid), {
-        role: "guest",
+    const result = await signInAnonymously(auth);
+    const user = result.user;
+
+    // Create a Firestore doc for invitado
+    await setDoc(
+      doc(db, "users", user.uid),
+      {
+        role: "invitado",
         createdAt: new Date().toISOString(),
-      }, { merge: true });
+      },
+      { merge: true }
+    );
 
-      // Force token refresh
-      await user.getIdToken(true);
+    // Force token refresh
+    await user.getIdToken(true);
 
-      // ✅ Wait until the claim is actually present
-      let claims;
-      for (let i = 0; i < 5; i++) {
-        await new Promise(res => setTimeout(res, 1000));
-        claims = await user.getIdTokenResult(true);
-        if (claims.claims.role === "guest") {
-          
-          setUserContext(user.uid, "guest", user.email ?? undefined);
-          setLoading(false);
-          router.push({
-            pathname: "/invitado",
-            params: { role: "guest", from: "login" },
-          });
+    // Wait for custom claim to propagate
+    let claims;
+    for (let i = 0; i < 5; i++) {
+      await new Promise((res) => setTimeout(res, 1000));
+      claims = await user.getIdTokenResult(true);
 
-          // 🧹 Clean up: delete the guest record from users collection
-          await deleteDoc(doc(db, "users", user.uid));
-          return;
-        }
+      if (claims.claims.role === "invitado") {
+        // Update context
+        setUserContext(user.uid, "invitado", user.email ?? undefined);
+
+        setLoading(false);
+
+        router.push({
+          pathname: "/invitado",
+          params: { role: "invitado", from: "login" },
+        });
+
+        // Clean up: delete invitado record
+        await deleteDoc(doc(db, "users", user.uid));
+        return;
       }
-
-      setLoading(false);
-      Alert.alert("Error", "Guest role not yet assigned. Please try again.");
-    } catch (error) {
-      setLoading(false);
-      logError("Guest login error:", error);
-      Alert.alert("Error", "No se pudo iniciar sesión como invitado.");
     }
-  };
+
+    setLoading(false);
+    Alert.alert("Error", "El rol invitado no fue asignado todavía. Intenta nuevamente.");
+  } catch (error) {
+    setLoading(false);
+    logError("Invitado login error:", error);
+    Alert.alert("Error", "No se pudo iniciar sesión como invitado.");
+  }
+};
 
   const validateForm = (): boolean => {
   const errors: Errors = {};

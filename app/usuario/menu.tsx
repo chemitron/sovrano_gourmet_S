@@ -37,9 +37,6 @@ export default function UsuarioMenu() {
 
   return (
     <MenuScreen
-      role="usuario"
-      email={email}
-      username={username}
     />
   );
 }

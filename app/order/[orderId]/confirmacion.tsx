@@ -14,31 +14,31 @@ export default function Confirmacion() {
   const [role, setRole] = useState<string | null>(null);
 
   // Load role from Firebase Auth
-  useEffect(() => {
-    const user = auth.currentUser;
-    if (!user) return;
+useEffect(() => {
+  const user = auth.currentUser;
+  if (!user) return;
 
-    user.getIdTokenResult().then((token) => {
-      const r = token.claims.role as string | undefined;
-      setRole(r ?? "guest");
-    });
-  }, []);
+  user.getIdTokenResult().then((token) => {
+    const r = token.claims.role as string | undefined;
+    setRole(r ?? "invitado");   // ⭐ FIXED
+  });
+}, []);
 
-  // Compute home route
-  const homeRoute =
-    role === "admin"
-      ? "/administrador"
-      : role === "usuario"
-      ? "/usuario"
-      : role === "empleado"
-      ? "/empleado"
-      : role === "guest"
-      ? "/invitado"
-      : role === "recepcion"
-      ? "/recepcion"
-      : role === "chef"
-      ? "/chef"
-      : "/login";
+// Compute home route
+const homeRoute =
+  role === "admin"
+    ? "/administrador"
+    : role === "usuario"
+    ? "/usuario"
+    : role === "empleado"
+    ? "/empleado"
+    : role === "invitado"      // ⭐ FIXED
+    ? "/invitado"
+    : role === "recepcion"
+    ? "/recepcion"
+    : role === "chef"
+    ? "/chef"
+    : "/login";
 
   const goHome = () => {
     router.replace(homeRoute);

@@ -23,6 +23,11 @@ export default function AdminIndex() {
   const [isOpen, setIsOpen] = useState<boolean>(true);
   const [closedMessage, setClosedMessage] = useState<string>("");
 
+useEffect(() => {
+  setRole("admin");
+}, []);
+
+
   const handleLogout = async () => {
       try {
         await signOut(auth);

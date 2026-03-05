@@ -2,7 +2,7 @@ import Constants from "expo-constants";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { signOut } from "firebase/auth";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -15,40 +15,54 @@ import {
   View,
 } from "react-native";
 import Button_style2 from "../../components/Button_style2";
-import GradientBackground from '../../components/GradientBackground';
-import Logo from '../../components/Logo';
-import { auth, db } from '../../services/firestore/firebase';
-import { useNombreEstilista } from "../../src/context/InvitadoContext";
+import GradientBackground from "../../components/GradientBackground";
+import Logo from "../../components/Logo";
+import { auth, db } from "../../services/firestore/firebase";
+
+// ⭐ Import invitado context fields
+import {
+  useInvitado,
+  useNombreEstilista,
+  useNombreInvitado,
+} from "../../src/context/InvitadoContext";
 
 export default function UsuarioIndex() {
-
   const username = auth.currentUser?.displayName;
+  const email = auth.currentUser?.email ?? null;
+
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Buenos días' : 'Buenas tardes';
+  const greeting = hour < 12 ? "Buenos días" : "Buenas tardes";
 
   const [role, setRole] = useState<string | null>(null);
   const [uid, setUid] = useState<string | null>(null);
   const [isCocinaOpen, setIsCocinaOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState("");
 
+  // ⭐ Context setters
+  const { setInvitadoEmail } = useInvitado();
+  const { setNombreInvitado } = useNombreInvitado();
   const { nombreEstilista, setNombreEstilista } = useNombreEstilista();
-  const params = useLocalSearchParams<{ from?: string }>();
 
+  const params = useLocalSearchParams<{ from?: string }>();
   const isExpoGo = Constants.appOwnership === "expo";
 
   // Modal state
   const [showEstilistaModal, setShowEstilistaModal] = useState(false);
   const [nombreEstilistaInput, setNombreEstilistaInput] = useState("");
 
+useEffect(() => {
+  setRole("usuario");
+}, []);
+
+
   // -----------------------------------------------------
-  // 🚀 1. Show modal BEFORE scanner
+  // 🚀 1. Show modal BEFORE scanner (fixed double-open)
   // -----------------------------------------------------
   useEffect(() => {
-    const shouldOpen = params.from === "login" || !nombreEstilista;
-
-    if (!shouldOpen) return;
-
-    setShowEstilistaModal(true);
+    if (params.from === "login" && !nombreEstilista) {
+      setShowEstilistaModal(true);
+      router.setParams({ from: undefined });
+    }
   }, [params.from, nombreEstilista]);
 
   // -----------------------------------------------------
@@ -96,21 +110,24 @@ export default function UsuarioIndex() {
   };
 
   // -----------------------------------------------------
-  // 🟦 Handle stylist submission
+  // 🟦 Handle stylist submission (fixed context timing)
   // -----------------------------------------------------
   const handleEstilistaSubmit = () => {
     if (!nombreEstilistaInput.trim()) return;
 
+    // ⭐ Set all required fields for usuario
+    setInvitadoEmail(email); // invitado = email
+    setNombreInvitado(username || email?.split("@")[0] || "usuario");
     setNombreEstilista(nombreEstilistaInput.trim());
+
     setShowEstilistaModal(false);
 
-    // ⭐ Expo Go → stay on this screen, user taps "Ver menú"
-    if (isExpoGo) {
-      return;
-    }
-
-    // ⭐ Real build → open scanner
-    router.push("/usuario/scanner");
+    // ⭐ Wait for context to update BEFORE navigating
+    setTimeout(() => {
+      if (!isExpoGo) {
+        router.push("/usuario/scanner");
+      }
+    }, 0);
   };
 
   const isFormValid = nombreEstilistaInput.trim().length > 0;
@@ -120,13 +137,13 @@ export default function UsuarioIndex() {
       <Stack.Screen
         options={{
           headerTitleAlign: "center",
-          headerTitle:"Usuario",
+          headerTitle: "Usuario",
           headerBackVisible: false,
         }}
       />
 
       {/* -----------------------------------------------------
-          🟦 Estilista Modal (BEFORE scanner)
+          🟦 Estilista Modal
       ----------------------------------------------------- */}
       <Modal visible={showEstilistaModal} transparent animationType="fade">
         <KeyboardAvoidingView
@@ -167,32 +184,32 @@ export default function UsuarioIndex() {
       </Modal>
 
       {/* -----------------------------------------------------
-          MAIN UI (UNCHANGED)
+          MAIN UI
       ----------------------------------------------------- */}
       <GradientBackground>
         <Logo />
 
         <View style={styles.container}>
           <Text style={styles.welcomeText}>
-            {`${greeting}, ${username || 'usuario'} 👋!`}
+            {`${greeting}, ${username || "usuario"} 👋!`}
           </Text>
 
-          <Text style={styles.welcomeText}>
-            ¡Nos alegra verte en Sovrano!
-          </Text>
+          <Text style={styles.welcomeText}>¡Nos alegra verte en Sovrano!</Text>
 
           <View>
             <Text style={styles.welcomeText}>Responsabilidad: {role}</Text>
           </View>
 
           {!isCocinaOpen && (
-            <Text style={{ 
-              color: "#b30000", 
-              fontSize: 18, 
-              textAlign: "center",
-              maxWidth: "80%",
-              alignSelf: "center" 
-            }}>
+            <Text
+              style={{
+                color: "#b30000",
+                fontSize: 18,
+                textAlign: "center",
+                maxWidth: "80%",
+                alignSelf: "center",
+              }}
+            >
               {closedMessage}
             </Text>
           )}
@@ -219,10 +236,7 @@ export default function UsuarioIndex() {
             />
           </View>
 
-          <Button_style2
-            title="Cerrar sesión"
-            onPress={handleLogout}
-          />
+          <Button_style2 title="Cerrar sesión" onPress={handleLogout} />
         </View>
       </GradientBackground>
     </>
@@ -232,16 +246,16 @@ export default function UsuarioIndex() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
-    alignContent: 'center',
+    backgroundColor: "transparent",
+    alignContent: "center",
     padding: 10,
     paddingTop: StatusBar.currentHeight || 0,
   },
   welcomeText: {
-    fontFamily: 'Playfair-Bold',
+    fontFamily: "Playfair-Bold",
     fontSize: 18,
-    color: '#3e3e3e',
-    textAlign: 'center',
+    color: "#3e3e3e",
+    textAlign: "center",
     marginBottom: 16,
   },
 

@@ -7,6 +7,7 @@ import Button_style2 from "../../components/Button_style2";
 import GradientBackground from '../../components/GradientBackground';
 import Logo from '../../components/Logo';
 import { auth, db } from '../../services/firestore/firebase';
+import { useRole } from "../../src/context/InvitadoContext";
 
 export default function EmpleadoIndex() {
   const windowDimensions = useWindowDimensions();
@@ -18,7 +19,11 @@ export default function EmpleadoIndex() {
   const username = auth.currentUser?.displayName;
   const [isCocinaOpen, setIsCocinaOpen] = useState(true);
 const [closedMessage, setClosedMessage] = useState("");
-const [role, setRole] = useState<string | null>(null);
+const { role, setRole } = useRole();
+
+useEffect(() => {
+  setRole("empleado");
+}, []);
 
 const handleLogout = async () => {
     try {
@@ -112,7 +117,7 @@ useEffect(() => {
           <View style={{ paddingBottom: 5 }}>
           <Button_style2
                         title="Mi cuenta"
-                        onPress={() => router.push("/empleado/cuenta-personal")}
+                        onPress={() => router.push("/usuario/cuenta-personal")}
                       />
                       </View>
 

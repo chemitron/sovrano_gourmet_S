@@ -1,11 +1,15 @@
 import React, { createContext, useContext, useState } from "react";
 
 type InvitadoContextType = {
-  role: string | null; setRole: (role: string | null) => void;
+  role: string | null;
+  setRole: (role: string | null) => void;
+
   invitadoEmail: string | null;
   setInvitadoEmail: (email: string | null) => void;
+
   nombreInvitado: string | null;
   setNombreInvitado: (nombreInvitado: string | null) => void;
+
   nombreEstilista: string | null;
   setNombreEstilista: (nombreEstilista: string | null) => void;
 };
@@ -13,57 +17,53 @@ type InvitadoContextType = {
 const InvitadoContext = createContext<InvitadoContextType | undefined>(undefined);
 
 export const InvitadoProvider = ({ children }: { children: React.ReactNode }) => {
+  const [role, setRole] = useState<string | null>(null);
   const [invitadoEmail, setInvitadoEmail] = useState<string | null>(null);
   const [nombreInvitado, setNombreInvitado] = useState<string | null>(null);
   const [nombreEstilista, setNombreEstilista] = useState<string | null>(null);
-  const [role, setRole] = useState<string | null>(null);
 
   return (
     <InvitadoContext.Provider
-    value={{
-    role,
-    setRole,
-    invitadoEmail,
-    setInvitadoEmail,
-    nombreInvitado,
-    setNombreInvitado,
-    nombreEstilista,
-    setNombreEstilista,
-  }}
->
-
+      value={{
+        role,
+        setRole,
+        invitadoEmail,
+        setInvitadoEmail,
+        nombreInvitado,
+        setNombreInvitado,
+        nombreEstilista,
+        setNombreEstilista,
+      }}
+    >
       {children}
     </InvitadoContext.Provider>
   );
 };
 
+// -----------------------------
+// Individual hooks (clean API)
+// -----------------------------
+
 export const useRole = () => {
-  const context = useContext(InvitadoContext);
-  if (!context) {
-    throw new Error("useRole must be used within an InvitadoProvider");
-  }
-  return { role: context.role, setRole: context.setRole };
+  const ctx = useContext(InvitadoContext);
+  if (!ctx) throw new Error("useRole must be used within an InvitadoProvider");
+  return { role: ctx.role, setRole: ctx.setRole };
 };
 
 export const useInvitado = () => {
-  const context = useContext(InvitadoContext);
-  if (!context) {
-    throw new Error("useInvitado must be used within a InvitadoProvider");
-  }
-  return context;
+  const ctx = useContext(InvitadoContext);
+  if (!ctx) throw new Error("useInvitado must be used within an InvitadoProvider");
+  return { invitadoEmail: ctx.invitadoEmail, setInvitadoEmail: ctx.setInvitadoEmail };
 };
 
-export const useNombreInvitado = () => { 
-  const context = useContext(InvitadoContext); 
-  if (!context) { 
-    throw new Error("useNombreInvitado must be used within an InvitadoProvider"); 
-  } 
-  return { nombreInvitado: context.nombreInvitado, setNombreInvitado: context.setNombreInvitado, }; 
+export const useNombreInvitado = () => {
+  const ctx = useContext(InvitadoContext);
+  if (!ctx) throw new Error("useNombreInvitado must be used within an InvitadoProvider");
+  return { nombreInvitado: ctx.nombreInvitado, setNombreInvitado: ctx.setNombreInvitado };
 };
-export const useNombreEstilista = () => { 
-  const context = useContext(InvitadoContext); 
-  if (!context) { throw new Error("useNombreEstilista must be used within an InvitadoProvider"); 
 
-  } 
-  return { nombreEstilista: context.nombreEstilista, setNombreEstilista: context.setNombreEstilista, }; 
+export const useNombreEstilista = () => {
+  const ctx = useContext(InvitadoContext);
+  if (!ctx) throw new Error("useNombreEstilista must be used within an InvitadoProvider");
+  return { nombreEstilista: ctx.nombreEstilista, setNombreEstilista: ctx.setNombreEstilista };
 };

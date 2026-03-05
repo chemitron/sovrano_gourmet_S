@@ -10,7 +10,7 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
-  where
+  where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
@@ -23,21 +23,23 @@ import {
   View,
 } from "react-native";
 import { getNextSequence } from "../../services/firestore/counters";
-import { auth } from '../../services/firestore/firebase';
+import { auth } from "../../services/firestore/firebase";
 import type { MenuCategory, MenuItem } from "../../src/types";
-import { useInvitado, useNombreEstilista, useNombreInvitado } from "../context/InvitadoContext";
+import {
+  useInvitado,
+  useNombreEstilista,
+  useNombreInvitado,
+  useRole,
+} from "../context/InvitadoContext";
 
-export default function MenuScreen({
-  role,
-  email,
-  username,
-}: {
-  role?: string;
-  email?: string | null;
-  username?: string | null;
-}) {
-
+export default function MenuScreen() {
   const db = getFirestore();
+
+  const { role } = useRole();
+  const { invitadoEmail } = useInvitado();
+  const { nombreInvitado } = useNombreInvitado();
+  const { nombreEstilista } = useNombreEstilista();
+
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,33 +48,20 @@ export default function MenuScreen({
   const [cartCount, setCartCount] = useState(0);
   const [itemsInOrder, setItemsInOrder] = useState<any[]>([]);
   const [orderNumber, setOrderNumber] = useState<number | null>(null);
-  const { invitadoEmail } = useInvitado();
-  const { nombreInvitado } = useNombreInvitado();
-  const { nombreEstilista } = useNombreEstilista();
-  const empleadoEmail = auth.currentUser?.email ?? null;
 
-const invitadoValue =
-  role === "empleado"
-    ? empleadoEmail
-    : invitadoEmail;
+  // -----------------------------------------------------
+  // LOAD EXISTING PENDING ORDER
+  // -----------------------------------------------------
+  useEffect(() => {
+    if (!auth.currentUser) return;
 
-const nombreInvitadoValue = nombreInvitado;
-const nombreEstilistaValue = nombreEstilista;
+    const q = query(
+      collection(db, "orders"),
+      where("userUid", "==", auth.currentUser.uid),
+      where("status", "==", "pendiente")
+    );
 
-useEffect(() => {
-
-  if (!auth.currentUser) return;
-
-  const q = query(
-    collection(db, "orders"),
-    where("userUid", "==", auth.currentUser.uid),
-    where("status", "==", "pendiente")
-  );
-
-  const unsub = onSnapshot(
-    q,
-    (snapshot) => {
-
+    const unsub = onSnapshot(q, (snapshot) => {
       if (snapshot.empty) {
         setOrderId(null);
         setItemsInOrder([]);
@@ -87,65 +76,54 @@ useEffect(() => {
       setOrderNumber(data.orderNumber);
       setItemsInOrder(data.items || []);
       setCartCount(data.items?.length ?? 0);
-    },
-    (err) => {
+    });
+
+    return () => unsub();
+  }, []);
+
+  // -----------------------------------------------------
+  // FILTER EMPLOYEE-ONLY ITEMS
+  // -----------------------------------------------------
+  const visibleItems = items.filter((item) => {
+    if (item.soloEmpleado) {
+      return role === "empleado" || role === "admin";
     }
-  );
+    return true;
+  });
 
-  return () => {
-    unsub();
-  };
-}, []);
-
-const visibleItems = items.filter((item) => {
-  if (item.soloEmpleado) {
-    return role === "empleado" || role === "admin";
-  }
-  return true;
-});
-
-  // Load categories
+  // -----------------------------------------------------
+  // LOAD CATEGORIES
+  // -----------------------------------------------------
   useEffect(() => {
+    const q = query(
+      collection(db, "menuCategories"),
+      where("isActive", "==", true),
+      orderBy("categoryIndex", "asc")
+    );
 
-  const q = query(
-    collection(db, "menuCategories"),
-    where("isActive", "==", true),
-    orderBy("categoryIndex", "asc")
-  );
-
-  const unsubscribe = onSnapshot(
-    q,
-    (snapshot) => {
-
+    const unsub = onSnapshot(q, (snapshot) => {
       const list: MenuCategory[] = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...(doc.data() as Omit<MenuCategory, "id">),
       }));
 
       setCategories(list);
-    },
-    (err) => {
-    }
-  );
+    });
 
-  return () => {
-    unsubscribe();
-  };
-}, []);
+    return () => unsub();
+  }, []);
 
-  // Load ONLY available items
+  // -----------------------------------------------------
+  // LOAD AVAILABLE ITEMS
+  // -----------------------------------------------------
   useEffect(() => {
+    const q = query(
+      collection(db, "menuItems"),
+      where("isAvailable", "==", true),
+      orderBy("itemIndex", "asc")
+    );
 
-  const q = query(
-    collection(db, "menuItems"),
-    where("isAvailable", "==", true),
-    orderBy("itemIndex", "asc")
-  );
-
-  const unsubscribe = onSnapshot(
-    q,
-    (snapshot) => {
-
+    const unsub = onSnapshot(q, (snapshot) => {
       const list: MenuItem[] = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...(doc.data() as Omit<MenuItem, "id">),
@@ -153,15 +131,10 @@ const visibleItems = items.filter((item) => {
 
       setItems(list);
       setLoading(false);
-    },
-    (err) => {
-    }
-  );
+    });
 
-  return () => {
-    unsubscribe();
-  };
-}, []);
+    return () => unsub();
+  }, []);
 
   if (loading) {
     return (
@@ -171,147 +144,178 @@ const visibleItems = items.filter((item) => {
     );
   }
 
-  function getPriceForRole(item: MenuItem, role: string | undefined) {
-  return role === "empleado"
-    ? item.priceEmployee
-    : item.priceCustomer;
-}
-
-async function addItemToOrder(item: MenuItem) {
-  const auth = getAuth();
-
-  try {
-    // ⭐ Determine the correct price based on user role
-    const price =
-      role === "empleado"
-        ? item.priceEmployee
-        : item.priceCustomer;
-
-    // ⭐ CASE 1 — No order exists yet → create one
-    if (!orderId) {
-      const orderNumber = await getNextSequence("orders");
-
-      const orderRef = doc(db, "orders", String(orderNumber));
-
-  await setDoc(orderRef, {
-  orderNumber,
-  userUid: auth.currentUser?.uid ?? null,
-
-  // ⭐ Store role ALWAYS
-  role: role ?? "usuario",
-
-  // ⭐ If guest → use invitadoEmail
-  userEmail: role === "invitado" ? invitadoEmail : email ?? null,
-
-  username: role === "invitado" ? invitadoEmail?.replace("@sovranogourmet.com", "") ?? null : (email?.split("@")[0] ?? null),
-
-  // ⭐ Always store invitado
-  invitado: invitadoValue ?? null,
-  nombreInvitado: nombreInvitadoValue ?? null,
-  nombreEstilista: nombreEstilistaValue ?? null,
-
-  createdAt: serverTimestamp(),
-  status: "pendiente",
-  paymentStatus: "pendiente",
-
-  items: [
-    {
-      itemId: item.id,
-      ItemName: item.ItemName,
-      price,
-      qty: 1,
-      imageUrl: item.imageUrl,
-      prepTime: item.prepTime,
-    },
-  ],
-});
-
-      setOrderId(String(orderNumber));
-      return;
-    }
-
-    // ⭐ CASE 2 — Order exists → append item
-    const orderRef = doc(db, "orders", String(orderId));
-
-    await updateDoc(orderRef, {
-  username: username ?? null,
-
-  // ⭐ Keep role updated
-  role: role ?? "usuario",
-
-  // ⭐ Always keep invitado updated
-  invitado: invitadoValue ?? null,
-  nombreInvitado: nombreInvitadoValue ?? null,
-  nombreEstilista: nombreEstilistaValue ?? null,
-
-  items: [
-    ...itemsInOrder,
-    {
-      itemId: item.id,
-      ItemName: item.ItemName,
-      price,
-      qty: 1,
-      imageUrl: item.imageUrl,
-      prepTime: item.prepTime,
-    },
-  ],
-});
-  } catch (err) {
+  // -----------------------------------------------------
+  // PRICE BY ROLE
+  // -----------------------------------------------------
+  function getPriceForRole(item: MenuItem) {
+    return role === "empleado" ? item.priceEmployee : item.priceCustomer;
   }
-}
 
+  // -----------------------------------------------------
+  // ADD ITEM TO ORDER
+  // -----------------------------------------------------
+  async function addItemToOrder(item: MenuItem) {
+    const auth = getAuth();
+
+    try {
+      // ⭐ Compute identity FRESH at the moment of adding
+      const currentUser = auth.currentUser;
+const baseEmail = currentUser?.email ?? null;
+const baseUsername =
+  currentUser?.displayName || baseEmail?.split("@")[0] || null;
+
+const isInvitado = role === "invitado";
+const isUsuario = role === "usuario" || !role;
+
+// 1. userEmail
+const userEmail = isInvitado ? invitadoEmail : baseEmail;
+
+// 2. username
+const usernameFinal = isInvitado
+  ? invitadoEmail?.replace("@sovranogourmet.com", "") ?? null
+  : baseUsername;
+
+// 3. invitado field
+const invitadoField = isInvitado
+  ? invitadoEmail
+  : isUsuario
+  ? baseEmail
+  : null;
+
+// 4. nombreInvitado field
+const nombreInvitadoField = isInvitado
+  ? nombreInvitado
+  : isUsuario
+  ? baseUsername
+  : null;
+
+// 5. nombreEstilista field
+const nombreEstilistaField = nombreEstilista || null;
+
+// 6. role to store
+const roleToStore = role ?? "usuario";
+
+      const price = getPriceForRole(item);
+
+      // ⭐ CASE 1 — CREATE NEW ORDER
+      if (!orderId) {
+        const orderNumber = await getNextSequence("orders");
+        const orderRef = doc(db, "orders", String(orderNumber));
+
+        await setDoc(orderRef, {
+          orderNumber,
+          userUid: auth.currentUser?.uid ?? null,
+
+          role: roleToStore,
+          userEmail,
+          username: usernameFinal,
+
+          invitado: invitadoField,
+          nombreInvitado: nombreInvitadoField,
+          nombreEstilista: nombreEstilistaField,
+
+          createdAt: serverTimestamp(),
+          status: "pendiente",
+          paymentStatus: "pendiente",
+
+          items: [
+            {
+              itemId: item.id,
+              ItemName: item.ItemName,
+              price,
+              qty: 1,
+              imageUrl: item.imageUrl,
+              prepTime: item.prepTime,
+            },
+          ],
+        });
+
+        setOrderId(String(orderNumber));
+        return;
+      }
+
+      // ⭐ CASE 2 — APPEND TO EXISTING ORDER
+      const orderRef = doc(db, "orders", String(orderId));
+
+      await updateDoc(orderRef, {
+        role: roleToStore,
+        userEmail,
+        username: usernameFinal,
+
+        invitado: invitadoField,
+        nombreInvitado: nombreInvitadoField,
+        nombreEstilista: nombreEstilistaField,
+
+        items: [
+          ...itemsInOrder,
+          {
+            itemId: item.id,
+            ItemName: item.ItemName,
+            price,
+            qty: 1,
+            imageUrl: item.imageUrl,
+            prepTime: item.prepTime,
+          },
+        ],
+      });
+    } catch (err) {
+      console.log("🔥 addItemToOrder error:", err);
+    }
+  }
+
+  // -----------------------------------------------------
+  // UI
+  // -----------------------------------------------------
   return (
     <>
       <Stack.Screen
-  options={{
-    headerTitleAlign: "center",
-    headerTitle: "Menu",
-    headerRight: () => (
-      <TouchableOpacity
-        onPress={() => {
-          if (orderId) {
-            router.push({
-              pathname: "/order/[orderId]",
-              params: { orderId },
-        });
-
-          }
-        }}
-        style={{ marginRight: 16 }}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={{ fontSize: 20 }}>🛒</Text>
-          {cartCount > 0 && (
-            <View
-              style={{
-                backgroundColor: "red",
-                borderRadius: 10,
-                paddingHorizontal: 6,
-                marginLeft: 4,
+        options={{
+          headerTitleAlign: "center",
+          headerTitle: "Menu",
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => {
+                if (orderId) {
+                  router.push({
+                    pathname: "/order/[orderId]",
+                    params: { orderId },
+                  });
+                }
               }}
+              style={{ marginRight: 16 }}
             >
-              <Text style={{ color: "white", fontWeight: "bold", fontSize: 12 }}>
-                {cartCount}
-              </Text>
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
-    ),
-  }}
-/>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text style={{ fontSize: 20 }}>🛒</Text>
+                {cartCount > 0 && (
+                  <View
+                    style={{
+                      backgroundColor: "red",
+                      borderRadius: 10,
+                      paddingHorizontal: 6,
+                      marginLeft: 4,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "white",
+                        fontWeight: "bold",
+                        fontSize: 12,
+                      }}
+                    >
+                      {cartCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          ),
+        }}
+      />
 
       <View style={{ flex: 1, padding: 20 }}>
-        {/* Optional: show email for debugging */}
-        {role === "usuario" && email && (
-          <Text style={{ marginBottom: 10, color: "#555" }}>
-            Logged in as: {email}
-          </Text>
-        )}
-
-        {/* CATEGORY FILTER */}
         <Text style={styles.filterLabel}>Categoría</Text>
 
+        {/* CATEGORY FILTER */}
         <View
           style={{
             borderWidth: 1,
@@ -322,7 +326,6 @@ async function addItemToOrder(item: MenuItem) {
           }}
         >
           <View style={styles.toggleContainer}>
-            {/* ALL */}
             <TouchableOpacity
               onPress={() => setCategoryFilter("all")}
               style={[
@@ -341,7 +344,6 @@ async function addItemToOrder(item: MenuItem) {
               </Text>
             </TouchableOpacity>
 
-            {/* DYNAMIC CATEGORY BUTTONS */}
             {categories.map((cat, index) => {
               const isLast = index === categories.length - 1;
 
@@ -375,75 +377,75 @@ async function addItemToOrder(item: MenuItem) {
 
         {/* CATEGORY GROUPS */}
         <FlatList
-  data={categories}
-  keyExtractor={(cat) => cat.id}
-  renderItem={({ item: category }) => {
-    const itemsInCategory = visibleItems
-      .filter((i) =>
-        categoryFilter === "all"
-          ? true
-          : String(i.categoryId) === categoryFilter
-      )
-      .filter((i) => i.categoryId === Number(category.id));
+          data={categories}
+          keyExtractor={(cat) => cat.id}
+          renderItem={({ item: category }) => {
+            const itemsInCategory = visibleItems
+              .filter((i) =>
+                categoryFilter === "all"
+                  ? true
+                  : String(i.categoryId) === categoryFilter
+              )
+              .filter((i) => i.categoryId === Number(category.id));
 
-    if (itemsInCategory.length === 0) return null;
+            if (itemsInCategory.length === 0) return null;
 
-    return (
-      <View style={{ marginBottom: 30 }}>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            marginBottom: 6,
-          }}
-        >
-          <Text style={styles.categoryHeader}>
-            {category.Categoryname}
-          </Text>
+            return (
+              <View style={{ marginBottom: 30 }}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 6,
+                  }}
+                >
+                  <Text style={styles.categoryHeader}>
+                    {category.Categoryname}
+                  </Text>
 
-          <Text style={styles.tapToAddText}>
-            Tocar plato para adicionar a la orden
-          </Text>
-        </View>
-
-        {itemsInCategory.map((item) => (
-          <View key={item.id} style={styles.itemCard}>
-            <TouchableOpacity onPress={() => addItemToOrder(item)}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginBottom: 10,
-                }}
-              >
-                {item.imageUrl ? (
-                  <Image
-                    source={{ uri: item.imageUrl }}
-                    style={styles.itemImage}
-                  />
-                ) : (
-                  <View style={styles.noImageBox}>
-                    <Text style={{ color: "#666", fontSize: 12 }}>
-                      Sin imagen
-                    </Text>
-                  </View>
-                )}
-
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.itemName}>{item.ItemName}</Text>
-                  <Text style={styles.itemDetails}>
-                    ${getPriceForRole(item, role).toFixed(2)} •{" "}
-                    {item.prepTime} min
+                  <Text style={styles.tapToAddText}>
+                    Tocar plato para adicionar a la orden
                   </Text>
                 </View>
+
+                {itemsInCategory.map((item) => (
+                  <View key={item.id} style={styles.itemCard}>
+                    <TouchableOpacity onPress={() => addItemToOrder(item)}>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          marginBottom: 10,
+                        }}
+                      >
+                        {item.imageUrl ? (
+                          <Image
+                            source={{ uri: item.imageUrl }}
+                            style={styles.itemImage}
+                          />
+                        ) : (
+                          <View style={styles.noImageBox}>
+                            <Text style={{ color: "#666", fontSize: 12 }}>
+                              Sin imagen
+                            </Text>
+                          </View>
+                        )}
+
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.itemName}>{item.ItemName}</Text>
+                          <Text style={styles.itemDetails}>
+                            ${getPriceForRole(item).toFixed(2)} •{" "}
+                            {item.prepTime} min
+                          </Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                ))}
               </View>
-            </TouchableOpacity>
-          </View>
-        ))}
-      </View>
-    );
-  }}
-/>
+            );
+          }}
+        />
       </View>
     </>
   );
@@ -451,7 +453,6 @@ async function addItemToOrder(item: MenuItem) {
 
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  title: { fontSize: 28, fontWeight: "bold", marginBottom: 20 },
   filterLabel: { fontSize: 16, fontWeight: "bold", marginBottom: 6 },
 
   toggleContainer: {
@@ -508,13 +509,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   itemName: { fontSize: 18, fontWeight: "bold" },
-
   itemDetails: { marginTop: 4, fontSize: 14, color: "#444" },
 
   tapToAddText: {
-  fontSize: 12,
-  color: "black",
-  marginLeft: 8,
-  fontStyle: "italic",
-},
+    fontSize: 12,
+    color: "black",
+    marginLeft: 8,
+    fontStyle: "italic",
+  },
 });

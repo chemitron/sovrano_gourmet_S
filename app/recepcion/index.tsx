@@ -36,6 +36,11 @@ export default function RecepcionIndex() {
   const [showQrModal, setShowQrModal] = useState(false);
   const [qrInput, setQrInput] = useState("invitado_1@sovranogourmet.com");
 
+useEffect(() => {
+  setRole("admin");
+}, []);
+
+
   const handleLogout = async () => {
     try {
       await signOut(auth);

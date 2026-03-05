@@ -56,7 +56,7 @@ export default function CuentaPersonalScreen() {
   const empleadoEmail = auth.currentUser?.email ?? null;
 
   const email =
-  role === "guest"
+  role === "invitado"
     ? invitadoEmail
     : empleadoEmail;
 
@@ -85,7 +85,7 @@ export default function CuentaPersonalScreen() {
 
   // Determine which field to filter by
   const field =
-  role === "guest"
+  role === "invitado"
     ? "invitado"
     : "userEmail";
 

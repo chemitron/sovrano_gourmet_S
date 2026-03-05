@@ -20,6 +20,11 @@ export default function ChefIndex() {
 const [closedMessage, setClosedMessage] = useState("");
 const [role, setRole] = useState<string | null>(null);
 
+useEffect(() => {
+  setRole("admin");
+}, []);
+
+
 const handleLogout = async () => {
     try {
       await signOut(auth);

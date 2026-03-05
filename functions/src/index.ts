@@ -1,2 +1,2 @@
-export { setGuestClaim } from "./setGuestClaim";
+export { setInvitadoClaim } from "./setInvitadoClaim";
 export { syncRoleClaim } from "./syncRoleClaim";

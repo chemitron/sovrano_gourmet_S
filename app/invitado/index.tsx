@@ -44,16 +44,18 @@ export default function InvitadoIndex() {
   const [nombreEstilistaInput, setNombreEstilistaInput] = useState("");
 
   useEffect(() => {
-    const shouldOpen = params.from === "login" || !invitadoEmail;
-
-    if (!shouldOpen) return;
-
+  // Only open modal if coming from login AND no invitadoEmail yet
+  if (params.from === "login" && !invitadoEmail) {
     if (isExpoGo) {
       setShowInvitadoModal(true);
     } else {
       router.replace("/invitado/scanner");
     }
-  }, [params.from, invitadoEmail]);
+
+    // ⭐ Prevent this effect from running again
+    router.setParams({ from: undefined });
+  }
+}, [params.from, invitadoEmail]);
 
   useEffect(() => {
     const ref = doc(db, "counters", "cocina");
