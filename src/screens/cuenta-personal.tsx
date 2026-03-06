@@ -208,6 +208,10 @@ export default function CuentaPersonalScreen() {
             <Text style={styles.balanceLabel}>Saldo actual</Text>
             <Text style={styles.balanceValue}>${balance.toFixed(2)}</Text>
           </View>
+          <Button_style2
+            title="Cargar a cuenta"
+            onPress={cargarCuenta}
+          />
 
           <Text style={styles.sectionTitle}>Órdenes en la cuenta</Text>
 
@@ -267,10 +271,6 @@ export default function CuentaPersonalScreen() {
             
           ))}
 
-          <Button_style2
-            title="Cargar a cuenta"
-            onPress={cargarCuenta}
-          />
         </ScrollView>
       </GradientBackground>
 

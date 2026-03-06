@@ -26,6 +26,7 @@ export default function ChefOrdenes() {
   const [now, setNow] = useState(Date.now());
   const [commentModalVisible, setCommentModalVisible] = useState(false);
   const [selectedComment, setSelectedComment] = useState<string | null>(null);
+  const previousOrdersRef = useRef<Record<string, Order>>({});
 
   const getElapsed = (createdAt: any) => {
   if (!createdAt) return "";
@@ -67,7 +68,7 @@ export default function ChefOrdenes() {
 
 const isStaffOrder = (order: Order) => {
   const role = order.role || "";
-  return role === "empleado" || role === "admin" || role === "recepcion";
+  return role === "empleado" || role === "admin" || role === "recepcion" || role === "chef";
 };
 
 const staffOrders = orders.filter(isStaffOrder);
@@ -112,11 +113,18 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
 
     // Detect canceled orders
     list.forEach((order) => {
-      const prev = orders.find((o) => o.id === order.id);
-      if (prev && prev.status !== "cancelado" && order.status === "cancelado") {
-        playCancelSound();
-      }
-    });
+  const prev = previousOrdersRef.current[order.id];
+
+  if (prev && prev.status !== "cancelado" && order.status === "cancelado") {
+    playCancelSound();
+  }
+});
+
+    const newPrev: Record<string, Order> = {}; 
+    list.forEach((o) => { 
+      newPrev[o.id] = o; 
+    }); 
+    previousOrdersRef.current = newPrev;
 
     // Update ref (instant, no re-render)
     knownOrderIdsRef.current = currentIds;
@@ -199,7 +207,6 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
       served: true,
       canceledAt: new Date(),
     });
-    playCancelSound();
   };
 
   // ⭐ Sorting helpers

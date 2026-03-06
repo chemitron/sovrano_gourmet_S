@@ -232,6 +232,10 @@ export default function OrderScreen() {
       </Modal>
 
       <View style={{ flex: 1, padding: 20 }}>
+        <Button_style2
+          title="Pagar"
+          onPress={handleCuentaPersonal}
+        />
         <Text style={styles.title}>Orden #{orderNumber ?? "..."}</Text>
 
         <FlatList
@@ -296,11 +300,6 @@ export default function OrderScreen() {
         />
 
         <Text style={styles.total}>Total: ${total.toFixed(2)}</Text>
-
-        <Button_style2
-          title="Pagar"
-          onPress={handleCuentaPersonal}
-        />
       </View>
     </>
   );

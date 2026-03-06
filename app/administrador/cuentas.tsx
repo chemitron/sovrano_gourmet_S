@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import {
   collection,
   doc,
+  getDoc,
   onSnapshot,
   query,
   updateDoc,
@@ -18,7 +19,7 @@ import {
 } from "react-native";
 import Button_style2 from "../../components/Button_style2";
 import GradientBackground from "../../components/GradientBackground";
-import { db } from "../../services/firestore/firebase";
+import { auth, db } from "../../services/firestore/firebase";
 import { Account, Order } from "../../src/types";
 
 export default function AdminCuentasScreen() {
@@ -27,73 +28,89 @@ export default function AdminCuentasScreen() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null);const [filter, setFilter] = useState<
-  "todas" | "sinPagarEmpleado" | "sinPagarUsuario"
-  >("sinPagarEmpleado");  
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+
+  const [filter, setFilter] = useState<
+    "todas" | "sinPagarEmpleado" | "sinPagarUsuario"
+  >("sinPagarEmpleado");
+
+  // ⭐ NEW — current user role + email
+  const [currentRole, setCurrentRole] = useState<string | null>(null);
+  const [currentEmail, setCurrentEmail] = useState<string | null>(null);
 
   useEffect(() => {
-  const ref = collection(db, "cuentas_personales");
+    const user = auth.currentUser;
+    if (!user) return;
 
-  const unsub = onSnapshot(ref, (snap) => {
-    const list = snap.docs
-      .map((d) => ({
-        email: d.id,
-        balance: d.data().balance ?? 0,
-        username: d.data().username,
-      }))
-      .filter((acc) => acc.balance > 0);   // ⭐ Only accounts with balance
+    setCurrentEmail(user.email ?? null);
 
-    setAccounts(list);
-  });
+    const ref = doc(db, "users", user.uid);
+    getDoc(ref).then((snap) => {
+      if (snap.exists()) {
+        setCurrentRole(snap.data().role ?? null);
+      }
+    });
+  }, []);
 
-  return () => unsub();
-}, []);
+  // ⭐ Load accounts
+  useEffect(() => {
+    const ref = collection(db, "cuentas_personales");
 
-  // ⭐ Load orders for each account
-useEffect(() => {
-  accounts.forEach((acc) => {
-    // Determine which field to filter by
-    // guest → invitado
-    // usuario, empleado, admin, chef, recepcion → userEmail
-    const field =
-      acc.username?.toLowerCase() === "invitado"
-        ? "invitado"
-        : "userEmail";
+    const unsub = onSnapshot(ref, (snap) => {
+      const list = snap.docs
+        .map((d) => ({
+          email: d.id,
+          balance: d.data().balance ?? 0,
+          username: d.data().username,
+        }))
+        .filter((acc) => acc.balance > 0);
 
-    const q = query(
-      collection(db, "orders"),
-      where(field, "==", acc.email),
-      where("chargedToAccount", "==", true),
-      where("accountPaid", "==", false),
-      where("status", "!=", "cancelado")
-    );
-
-    const unsub = onSnapshot(q, (snap) => {
-      const list = snap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      })) as Order[];
-
-      setOrders((prev) => ({
-        ...prev,
-        [acc.email]: list,
-      }));
+      setAccounts(list);
     });
 
     return () => unsub();
-  });
-}, [accounts]);
+  }, []);
+
+  // ⭐ Load orders for each account
+  useEffect(() => {
+    accounts.forEach((acc) => {
+      const field =
+        acc.username?.toLowerCase() === "invitado"
+          ? "invitado"
+          : "userEmail";
+
+      const q = query(
+        collection(db, "orders"),
+        where(field, "==", acc.email),
+        where("chargedToAccount", "==", true),
+        where("accountPaid", "==", false),
+        where("status", "!=", "cancelado")
+      );
+
+      const unsub = onSnapshot(q, (snap) => {
+        const list = snap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        })) as Order[];
+
+        setOrders((prev) => ({
+          ...prev,
+          [acc.email]: list,
+        }));
+      });
+
+      return () => unsub();
+    });
+  }, [accounts]);
 
   // ⭐ Mark account as paid
   const markAsPaid = async (email: string) => {
     const relatedOrders = orders[email] ?? [];
 
-    // 1) Reset balance
     await updateDoc(doc(db, "cuentas_personales", email), {
       balance: 0,
     });
 
-    // 2) Mark all orders as paid
     for (const order of relatedOrders) {
       await updateDoc(doc(db, "orders", order.id), {
         accountPaid: true,
@@ -104,31 +121,32 @@ useEffect(() => {
     }
   };
 
+  // ⭐ Filtering logic
   const filteredAccounts = accounts.filter((acc) => {
-  if (filter === "todas") return true;
+    if (filter === "todas") return true;
 
-  const accountOrders = orders[acc.email] ?? [];
-  const role = accountOrders[0]?.role?.toLowerCase() ?? null;
+    const accountOrders = orders[acc.email] ?? [];
+    const role = accountOrders[0]?.role?.toLowerCase() ?? null;
 
-  const isEmpleadoRole =
-    role === "empleado" ||
-    role === "admin" ||
-    role === "chef" ||
-    role === "recepcion";
+    const isEmpleadoRole =
+      role === "empleado" ||
+      role === "admin" ||
+      role === "chef" ||
+      role === "recepcion";
 
-  const isUsuarioRole =
-    role === "usuario" || role === "invitado";
+    const isUsuarioRole =
+      role === "usuario" || role === "invitado";
 
-  if (filter === "sinPagarEmpleado") {
-    return isEmpleadoRole && acc.balance > 0;
-  }
+    if (filter === "sinPagarEmpleado") {
+      return isEmpleadoRole && acc.balance > 0;
+    }
 
-  if (filter === "sinPagarUsuario") {
-    return isUsuarioRole && acc.balance > 0;
-  }
+    if (filter === "sinPagarUsuario") {
+      return isUsuarioRole && acc.balance > 0;
+    }
 
-  return true;
-});
+    return true;
+  });
 
   return (
     <>
@@ -141,128 +159,132 @@ useEffect(() => {
 
       <GradientBackground>
         <ScrollView contentContainerStyle={styles.container}>
+          {/* FILTERS */}
           <View style={styles.filterRow}>
-  <TouchableOpacity
-    style={[
-      styles.filterButton,
-      filter === "todas" && styles.filterButtonActive,
-    ]}
-    onPress={() => setFilter("todas")}
-  >
-    <Text
-      style={[
-        styles.filterButtonText,
-        filter === "todas" && styles.filterButtonTextActive,
-      ]}
-    >
-      Todas
-    </Text>
-  </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.filterButton,
+                filter === "todas" && styles.filterButtonActive,
+              ]}
+              onPress={() => setFilter("todas")}
+            >
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  filter === "todas" && styles.filterButtonTextActive,
+                ]}
+              >
+                Todas
+              </Text>
+            </TouchableOpacity>
 
-  <TouchableOpacity
-    style={[
-      styles.filterButton,
-      filter === "sinPagarEmpleado" && styles.filterButtonActive,
-    ]}
-    onPress={() => setFilter("sinPagarEmpleado")}
-  >
-    <Text
-      style={[
-        styles.filterButtonText,
-        filter === "sinPagarEmpleado" && styles.filterButtonTextActive,
-      ]}
-    >
-      Sin pagar empleado
-    </Text>
-  </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.filterButton,
+                filter === "sinPagarEmpleado" && styles.filterButtonActive,
+              ]}
+              onPress={() => setFilter("sinPagarEmpleado")}
+            >
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  filter === "sinPagarEmpleado" &&
+                    styles.filterButtonTextActive,
+                ]}
+              >
+                Sin pagar empleado
+              </Text>
+            </TouchableOpacity>
 
-  <TouchableOpacity
-    style={[
-      styles.filterButton,
-      filter === "sinPagarUsuario" && styles.filterButtonActive,
-    ]}
-    onPress={() => setFilter("sinPagarUsuario")}
-  >
-    <Text
-      style={[
-        styles.filterButtonText,
-        filter === "sinPagarUsuario" && styles.filterButtonTextActive,
-      ]}
-    >
-      Sin pagar usuario
-    </Text>
-  </TouchableOpacity>
-</View>
+            <TouchableOpacity
+              style={[
+                styles.filterButton,
+                filter === "sinPagarUsuario" && styles.filterButtonActive,
+              ]}
+              onPress={() => setFilter("sinPagarUsuario")}
+            >
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  filter === "sinPagarUsuario" &&
+                    styles.filterButtonTextActive,
+                ]}
+              >
+                Sin pagar usuario
+              </Text>
+            </TouchableOpacity>
+          </View>
 
+          {/* ACCOUNT CARDS */}
           {filteredAccounts.map((acc) => {
-  const accountOrders = orders[acc.email] ?? [];
-  const customerName =
-    accountOrders.length > 0
-      ? accountOrders[0].username || "Sin nombre"
-      : "Sin nombre";
+            const accountOrders = orders[acc.email] ?? [];
 
-  return (
-    <View key={acc.email} style={styles.accountCard}>
+            return (
+              <View key={acc.email} style={styles.accountCard}>
+                <View style={styles.topRow}>
+                  <Text style={styles.topItem}>{acc.username}</Text>
+                  <Text style={styles.topItem}>
+                    Saldo: ${acc.balance.toFixed(2)}
+                  </Text>
+                </View>
 
-<View style={styles.topRow}>
-  <Text style={styles.topItem}>{acc.username}</Text>
-  <Text style={styles.topItem}>Saldo: ${acc.balance.toFixed(2)}</Text>
-</View>
+                <Text style={styles.sectionTitle}>Órdenes pendientes</Text>
 
-      <Text style={styles.sectionTitle}>Órdenes pendientes</Text>
+                {accountOrders.length === 0 && (
+                  <Text style={styles.emptyText}>
+                    No hay órdenes pendientes
+                  </Text>
+                )}
 
-      {accountOrders.length === 0 && (
-        <Text style={styles.emptyText}>No hay órdenes pendientes</Text>
-      )}
+                {accountOrders.map((order) => (
+                  <View key={order.id} style={{ marginBottom: 12 }}>
+                    <View style={styles.rowTop}>
+                      <Text style={styles.orderText}>
+                        Orden #{order.orderNumber} — ${order.total}
+                      </Text>
+                    </View>
 
-      {accountOrders.map((order) => (
-  <View key={order.id} style={{ marginBottom: 12 }}>
+                    <View style={styles.rowBottom}>
+                      <Text style={styles.orderText}>
+                        Cargado a cuenta:{" "}
+                        {order.chargedToAccount ? "Sí" : "No"}
+                      </Text>
 
-    {/* ⭐ ROW 1 — Order number + total */}
-    <View style={styles.rowTop}>
-      <Text style={styles.orderText}>
-        Orden #{order.orderNumber} — ${order.total}
-      </Text>
-    </View>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setSelectedOrder(order);
+                          setModalVisible(true);
+                        }}
+                      >
+                        <Text style={styles.detailsLink}>Ver detalles</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
 
-    {/* ⭐ ROW 2 — Charged + Details */}
-    <View style={styles.rowBottom}>
-      <Text style={styles.orderText}>
-        Cargado a cuenta: {order.chargedToAccount ? "Sí" : "No"}
-      </Text>
-
-      <TouchableOpacity
-        onPress={() => {
-          setSelectedOrder(order);
-          setModalVisible(true);
-        }}
-      >
-        <Text style={styles.detailsLink}>Ver detalles</Text>
-      </TouchableOpacity>
-    </View>
-
-  </View>
-))}
-
-      {acc.balance > 0 && (
-        <View style={{ paddingTop: 10 }}>
-          <Button_style2
-            title="Marcar como Pagada"
-            onPress={() => {
-              setPendingEmail(acc.email);
-              setConfirmVisible(true);
-            }}
-          />
-        </View>
-      )}
-    </View>
-  );
-})}
-
+                {/* ⭐ Disable button if recepcion is viewing their own account */}
+                {acc.balance > 0 && (
+                  <View style={{ paddingTop: 10 }}>
+                    <Button_style2
+                      title="Marcar como Pagada"
+                      onPress={() => {
+                        setPendingEmail(acc.email);
+                        setConfirmVisible(true);
+                      }}
+                      disabled={
+                        currentRole === "recepcion" &&
+                        acc.email === currentEmail
+                      }
+                    />
+                  </View>
+                )}
+              </View>
+            );
+          })}
         </ScrollView>
       </GradientBackground>
 
-      {/* ⭐ MODAL */}
+      {/* DETAILS MODAL */}
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -270,10 +292,8 @@ useEffect(() => {
               Orden #{selectedOrder?.orderNumber}
             </Text>
 
-            {/* ⭐ CreatedAt with weekday */}
             {selectedOrder?.createdAt && (
               <Text style={styles.modalDate}>
-                {" "}
                 {new Intl.DateTimeFormat("es-CO", {
                   weekday: "long",
                   year: "numeric",
@@ -308,43 +328,43 @@ useEffect(() => {
         </View>
       </Modal>
 
+      {/* CONFIRM MODAL */}
       <Modal visible={confirmVisible} transparent animationType="fade">
-  <View style={styles.modalOverlay}>
-    <View style={styles.modalBox}>
-      <Text style={styles.modalTitle}>Confirmación</Text>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Confirmación</Text>
 
-      <Text style={styles.modalMessage}>
-        ¿Estás seguro que deseas marcar esta cuenta como pagada?
-      </Text>
+            <Text style={styles.modalMessage}>
+              ¿Estás seguro que deseas marcar esta cuenta como pagada?
+            </Text>
 
-      <View style={styles.modalButtons}>
-        <TouchableOpacity
-          style={styles.confirmButton}
-          onPress={() => {
-            if (pendingEmail) {
-              markAsPaid(pendingEmail);
-            }
-            setConfirmVisible(false);
-            setPendingEmail(null);
-          }}
-        >
-          <Text style={styles.confirmButtonText}>Sí, marcar</Text>
-        </TouchableOpacity>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={() => {
+                  if (pendingEmail) {
+                    markAsPaid(pendingEmail);
+                  }
+                  setConfirmVisible(false);
+                  setPendingEmail(null);
+                }}
+              >
+                <Text style={styles.confirmButtonText}>Sí, marcar</Text>
+              </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.cancelButton}
-          onPress={() => {
-            setConfirmVisible(false);
-            setPendingEmail(null);
-          }}
-        >
-          <Text style={styles.cancelButtonText}>Cancelar</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </View>
-</Modal>
-
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => {
+                  setConfirmVisible(false);
+                  setPendingEmail(null);
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -361,26 +381,13 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 12,
   },
-  email: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  balance: {
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    marginTop: 10,
-    fontWeight: "600",
-  },
   emptyText: {
     color: "#777",
     fontStyle: "italic",
   },
-  orderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 5,
+  sectionTitle: {
+    marginTop: 10,
+    fontWeight: "600",
   },
   orderText: {
     fontSize: 15,
@@ -389,14 +396,23 @@ const styles = StyleSheet.create({
     color: "#3A2F2F",
     fontWeight: "600",
   },
-  payButton: {
-    backgroundColor: "#3A2F2F",
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 15,
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
   },
-
-  // ⭐ Modal
+  topItem: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#3A2F2F",
+  },
+  rowTop: {
+    marginBottom: 2,
+  },
+  rowBottom: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
@@ -449,91 +465,59 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-modalMessage: {
-  fontSize: 16,
-  marginBottom: 20,
-  color: "#333",
-},
-modalButtons: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-},
-confirmButton: {
-  backgroundColor: "#3A2F2F",
-  padding: 12,
-  borderRadius: 8,
-  flex: 1,
-  marginRight: 10,
-},
-confirmButtonText: {
-  color: "white",
-  textAlign: "center",
-  fontWeight: "600",
-},
-cancelButton: {
-  backgroundColor: "#ddd",
-  padding: 12,
-  borderRadius: 8,
-  flex: 1,
-  marginLeft: 10,
-},
-cancelButtonText: {
-  textAlign: "center",
-  fontWeight: "600",
-  color: "#333",
-},
-filterRow: {
-  flexDirection: "row",
-  justifyContent: "center",
-  gap: 10,
-  marginBottom: 10,
-},
-
-filterButton: {
-  paddingVertical: 8,
-  paddingHorizontal: 16,
-  borderRadius: 8,
-  backgroundColor: "#ddd",
-},
-
-filterButtonActive: {
-  backgroundColor: "#3A2F2F",
-},
-
-filterButtonText: {
-  color: "#333",
-  fontWeight: "600",
-},
-
-filterButtonTextActive: {
-  color: "white",
-},
-topRow: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  width: "100%",
-  marginBottom: 10,
-},
-
-topItem: {
-  fontSize: 16,
-  fontWeight: "600",
-  color: "#3A2F2F",
-  flex: 1,              // ⭐ ensures equal spacing
-  textAlign: "left",    // you can change to "center" or "right"
-},
-rowTop: {
-  flexDirection: "row",
-  justifyContent: "flex-start",
-  width: "100%",
-  marginBottom: 2,
-},
-
-rowBottom: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  width: "100%",
-},
+  modalMessage: {
+    fontSize: 16,
+    marginBottom: 20,
+    color: "#333",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  confirmButton: {
+    backgroundColor: "#3A2F2F",
+    padding: 12,
+    borderRadius: 8,
+    flex: 1,
+    marginRight: 10,
+  },
+  confirmButtonText: {
+    color: "white",
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  cancelButton: {
+    backgroundColor: "#ddd",
+    padding: 12,
+    borderRadius: 8,
+    flex: 1,
+    marginLeft: 10,
+  },
+  cancelButtonText: {
+    textAlign: "center",
+    fontWeight: "600",
+    color: "#333",
+  },
+  filterRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 10,
+    marginBottom: 10,
+  },
+  filterButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: "#ddd",
+  },
+  filterButtonActive: {
+    backgroundColor: "#3A2F2F",
+  },
+  filterButtonText: {
+    color: "#333",
+    fontWeight: "600",
+  },
+  filterButtonTextActive: {
+    color: "white",
+  },
 });
