@@ -27,8 +27,9 @@ export default function AdminCuentasScreen() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"todas" | "sinPagar">("sinPagar");
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);const [filter, setFilter] = useState<
+  "todas" | "sinPagarEmpleado" | "sinPagarUsuario"
+  >("sinPagarEmpleado");  
 
   useEffect(() => {
   const ref = collection(db, "cuentas_personales");
@@ -55,7 +56,6 @@ useEffect(() => {
     // guest → invitado
     // usuario, empleado, admin, chef, recepcion → userEmail
     const field =
-      acc.username?.toLowerCase() === "guest" ||
       acc.username?.toLowerCase() === "invitado"
         ? "invitado"
         : "userEmail";
@@ -104,7 +104,31 @@ useEffect(() => {
     }
   };
 
-  const filteredAccounts = filter === "sinPagar" ? accounts.filter((acc) => acc.balance > 0) : accounts;
+  const filteredAccounts = accounts.filter((acc) => {
+  if (filter === "todas") return true;
+
+  const accountOrders = orders[acc.email] ?? [];
+  const role = accountOrders[0]?.role?.toLowerCase() ?? null;
+
+  const isEmpleadoRole =
+    role === "empleado" ||
+    role === "admin" ||
+    role === "chef" ||
+    role === "recepcion";
+
+  const isUsuarioRole =
+    role === "usuario" || role === "invitado";
+
+  if (filter === "sinPagarEmpleado") {
+    return isEmpleadoRole && acc.balance > 0;
+  }
+
+  if (filter === "sinPagarUsuario") {
+    return isUsuarioRole && acc.balance > 0;
+  }
+
+  return true;
+});
 
   return (
     <>
@@ -138,17 +162,34 @@ useEffect(() => {
   <TouchableOpacity
     style={[
       styles.filterButton,
-      filter === "sinPagar" && styles.filterButtonActive,
+      filter === "sinPagarEmpleado" && styles.filterButtonActive,
     ]}
-    onPress={() => setFilter("sinPagar")}
+    onPress={() => setFilter("sinPagarEmpleado")}
   >
     <Text
       style={[
         styles.filterButtonText,
-        filter === "sinPagar" && styles.filterButtonTextActive,
+        filter === "sinPagarEmpleado" && styles.filterButtonTextActive,
       ]}
     >
-      Sin pagar
+      Sin pagar empleado
+    </Text>
+  </TouchableOpacity>
+
+  <TouchableOpacity
+    style={[
+      styles.filterButton,
+      filter === "sinPagarUsuario" && styles.filterButtonActive,
+    ]}
+    onPress={() => setFilter("sinPagarUsuario")}
+  >
+    <Text
+      style={[
+        styles.filterButtonText,
+        filter === "sinPagarUsuario" && styles.filterButtonTextActive,
+      ]}
+    >
+      Sin pagar usuario
     </Text>
   </TouchableOpacity>
 </View>

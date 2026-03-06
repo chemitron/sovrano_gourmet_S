@@ -7,38 +7,40 @@ import Button_style2 from "../../components/Button_style2";
 import GradientBackground from "../../components/GradientBackground";
 import { auth, db } from "../../services/firestore/firebase";
 
+// ⭐ NEW — import resetContext
+import { useResetContext } from "../../src/context/InvitadoContext";
+
 export default function AdminIndex() {
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;
   const windowHeight = windowDimensions.height;
-
   const username = auth.currentUser?.displayName;
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Buenos días" : "Buenas tardes";
-
   const [role, setRole] = useState<string | null>(null);
   const [uid, setUid] = useState<string | null>(null);
-
-  // Cocina state
   const [isOpen, setIsOpen] = useState<boolean>(true);
   const [closedMessage, setClosedMessage] = useState<string>("");
 
-useEffect(() => {
-  setRole("admin");
-}, []);
+  // ⭐ NEW — get resetContext()
+  const resetContext = useResetContext();
 
+  useEffect(() => {
+    setRole("admin");
+  }, []);
 
   const handleLogout = async () => {
-      try {
-        await signOut(auth);
-  
-        router.dismissAll();
-        router.replace("/login");
-      } catch (error) {
-      }
-    };
+    try {
+      await signOut(auth);
 
-  // Load admin role + cocina state
+      // ⭐ Reset invitado + role context globally
+      resetContext();
+
+      router.dismissAll();
+      router.replace("/login");
+    } catch (error) {}
+  };
+
   useEffect(() => {
     const loadData = async () => {
       const currentUser = auth.currentUser;
@@ -47,7 +49,6 @@ useEffect(() => {
       const currentUid = currentUser.uid;
       setUid(currentUid);
 
-      // Check role
       const userDoc = await getDoc(doc(db, "users", currentUid));
       const fetchedRole = userDoc.data()?.role;
       setRole(fetchedRole);
@@ -56,7 +57,6 @@ useEffect(() => {
         Alert.alert("Usuario no es administrador");
       }
 
-      // Load cocina state
       const cocinaRef = doc(db, "counters", "cocina");
       const cocinaSnap = await getDoc(cocinaRef);
 
@@ -69,14 +69,13 @@ useEffect(() => {
     loadData();
   }, []);
 
-  // Toggle cocina open/closed
   const toggleCocina = async () => {
     const cocinaRef = doc(db, "counters", "cocina");
     const newState = !isOpen;
 
     await updateDoc(cocinaRef, {
       isOpen: newState,
-      message: "Lo sentimos. Sovrano Gourmet está cerrado hoy."
+      message: "Lo sentimos. Sovrano Gourmet está cerrado hoy.",
     });
 
     setIsOpen(newState);
@@ -88,12 +87,11 @@ useEffect(() => {
         options={{
           headerTitleAlign: "center",
           headerTitle: "Administrador",
-          headerBackVisible: false, 
+          headerBackVisible: false,
         }}
       />
 
       <GradientBackground>
-
         <View style={styles.container}>
           <View
             style={{
@@ -113,7 +111,6 @@ useEffect(() => {
               <Text style={styles.welcomeText}>¡Nos alegra verte en Sovrano!</Text>
             </View>
 
-            {/* Admin navigation buttons */}
             <Button_style2
               title="Manejo empleados"
               onPress={() => router.push("/administrador/manejo_empleados")}
@@ -147,22 +144,18 @@ useEffect(() => {
               onPress={() => router.push("/administrador/reports")}
             />
 
-            {/* Cocina toggle */}
             <Button_style2
               title={isOpen ? "Cerrar cocina" : "Abrir cocina"}
               onPress={toggleCocina}
             />
 
-            {/* Show closed message when cocina is closed */}
             {!isOpen && (
               <Text style={[styles.welcomeText, { color: "#b30000" }]}>
                 {closedMessage}
               </Text>
             )}
-            <Button_style2
-                        title="Cerrar sesión"
-                        onPress={handleLogout}
-                      />
+
+            <Button_style2 title="Cerrar sesión" onPress={handleLogout} />
           </View>
         </View>
       </GradientBackground>
@@ -180,6 +173,6 @@ const styles = StyleSheet.create({
     color: "#3e3e3e",
     textAlign: "center",
     marginBottom: 5,
-    paddingTop:10,
+    paddingTop: 10,
   },
 });

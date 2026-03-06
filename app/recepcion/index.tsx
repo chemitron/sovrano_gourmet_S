@@ -17,20 +17,20 @@ import {
 import Button_style2 from "../../components/Button_style2";
 import GradientBackground from "../../components/GradientBackground";
 import { auth, db } from "../../services/firestore/firebase";
+import { useResetContext } from "../../src/context/InvitadoContext";
 
 export default function RecepcionIndex() {
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;
   const windowHeight = windowDimensions.height;
-
   const username = auth.currentUser?.displayName;
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Buenos días" : "Buenas tardes";
 
   const [role, setRole] = useState<string | null>(null);
   const [uid, setUid] = useState<string | null>(null);
-
   const isExpoGo = Constants.appOwnership === "expo";
+  const resetContext = useResetContext();
 
   // Modal for Expo Go manual QR input
   const [showQrModal, setShowQrModal] = useState(false);
@@ -44,6 +44,7 @@ useEffect(() => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      resetContext();
       router.dismissAll();
       router.replace("/login");
     } catch (error) {}

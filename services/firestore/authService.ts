@@ -1,4 +1,5 @@
 import { signInAnonymously, signOut } from 'firebase/auth';
+import { useResetContext } from "../../src/context/InvitadoContext";
 import { logError } from "../../utils/logger";
 import { auth } from '../firestore/firebase';
 
@@ -12,8 +13,10 @@ export const signInAsGuest = async () => {
   }
 };
 export const logout = async () => {
+  const resetContext = useResetContext();
   try {
     await signOut(auth);
+    resetContext();
   } catch (error) {
     logError('Logout error:', error);
   }

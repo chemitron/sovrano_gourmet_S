@@ -298,7 +298,7 @@ export default function OrderScreen() {
         <Text style={styles.total}>Total: ${total.toFixed(2)}</Text>
 
         <Button_style2
-          title="Pagar con cuenta personal"
+          title="Pagar"
           onPress={handleCuentaPersonal}
         />
       </View>

@@ -7,6 +7,7 @@ import Button_style2 from "../../components/Button_style2";
 import GradientBackground from '../../components/GradientBackground';
 import Logo from '../../components/Logo';
 import { auth, db } from '../../services/firestore/firebase';
+import { useResetContext } from "../../src/context/InvitadoContext";
 
 export default function ChefIndex() {
   const windowDimensions = useWindowDimensions();
@@ -17,8 +18,9 @@ export default function ChefIndex() {
   const greeting = hour < 12 ? 'Buenos días' : 'Buenas tardes';
   const username = auth.currentUser?.displayName;
   const [isCocinaOpen, setIsCocinaOpen] = useState(true);
-const [closedMessage, setClosedMessage] = useState("");
-const [role, setRole] = useState<string | null>(null);
+  const [closedMessage, setClosedMessage] = useState("");
+  const [role, setRole] = useState<string | null>(null);
+  const resetContext = useResetContext();
 
 useEffect(() => {
   setRole("admin");
@@ -28,6 +30,7 @@ useEffect(() => {
 const handleLogout = async () => {
     try {
       await signOut(auth);
+      resetContext();
 
       router.dismissAll();
       router.replace("/login");

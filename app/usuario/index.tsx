@@ -24,6 +24,7 @@ import {
   useInvitado,
   useNombreEstilista,
   useNombreInvitado,
+  useResetContext,
 } from "../../src/context/InvitadoContext";
 
 export default function UsuarioIndex() {
@@ -42,9 +43,9 @@ export default function UsuarioIndex() {
   const { setInvitadoEmail } = useInvitado();
   const { setNombreInvitado } = useNombreInvitado();
   const { nombreEstilista, setNombreEstilista } = useNombreEstilista();
-
   const params = useLocalSearchParams<{ from?: string }>();
   const isExpoGo = Constants.appOwnership === "expo";
+  const resetContext = useResetContext();
 
   // Modal state
   const [showEstilistaModal, setShowEstilistaModal] = useState(false);
@@ -104,6 +105,7 @@ useEffect(() => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      resetContext();
       router.dismissAll();
       router.replace("/login");
     } catch (error) {}

@@ -22,6 +22,7 @@ import {
   useInvitado,
   useNombreEstilista,
   useNombreInvitado,
+  useResetContext,
   useRole,
 } from "../../src/context/InvitadoContext";
 
@@ -30,18 +31,15 @@ export default function InvitadoIndex() {
   const { nombreInvitado, setNombreInvitado } = useNombreInvitado();
   const { nombreEstilista, setNombreEstilista } = useNombreEstilista();
   const { role, setRole } = useRole();
-
   const params = useLocalSearchParams<{ from?: string }>();
   const isExpoGo = Constants.appOwnership === "expo";
-
   const [isCocinaOpen, setIsCocinaOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState("");
-
   const [showInvitadoModal, setShowInvitadoModal] = useState(false);
-
   const [invitadoInput, setInvitadoInput] = useState("invitado_1@sovranogourmet.com");
   const [nombreInvitadoInput, setNombreInvitadoInput] = useState("");
   const [nombreEstilistaInput, setNombreEstilistaInput] = useState("");
+  const resetContext = useResetContext();
 
   useEffect(() => {
   // Only open modal if coming from login AND no invitadoEmail yet
@@ -71,6 +69,7 @@ export default function InvitadoIndex() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      resetContext();
       router.dismissAll();
       router.replace("/login");
     } catch (error) {}

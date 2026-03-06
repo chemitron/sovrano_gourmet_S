@@ -7,7 +7,7 @@ import Button_style2 from "../../components/Button_style2";
 import GradientBackground from '../../components/GradientBackground';
 import Logo from '../../components/Logo';
 import { auth, db } from '../../services/firestore/firebase';
-import { useRole } from "../../src/context/InvitadoContext";
+import { useResetContext, useRole } from "../../src/context/InvitadoContext";
 
 export default function EmpleadoIndex() {
   const windowDimensions = useWindowDimensions();
@@ -18,8 +18,9 @@ export default function EmpleadoIndex() {
   const greeting = hour < 12 ? 'Buenos días' : 'Buenas tardes';
   const username = auth.currentUser?.displayName;
   const [isCocinaOpen, setIsCocinaOpen] = useState(true);
-const [closedMessage, setClosedMessage] = useState("");
-const { role, setRole } = useRole();
+  const [closedMessage, setClosedMessage] = useState("");
+  const { role, setRole } = useRole();
+  const resetContext = useResetContext();
 
 useEffect(() => {
   setRole("empleado");
@@ -28,7 +29,7 @@ useEffect(() => {
 const handleLogout = async () => {
     try {
       await signOut(auth);
-
+      resetContext();
       router.dismissAll();
       router.replace("/login");
     } catch (error) {
