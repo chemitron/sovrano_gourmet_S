@@ -2,20 +2,37 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import Constants from "expo-constants";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { useInvitado } from "../context/InvitadoContext";
+import {
+  ActivityIndicator,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useInvitado, useNombreEstilista, useNombreInvitado } from "../context/InvitadoContext";
 
 export default function ScannerScreen({ role }: { role?: string }) {
-
   const { setInvitadoEmail } = useInvitado();
+  const { setNombreInvitado } = useNombreInvitado();
+  const { setNombreEstilista } = useNombreEstilista();
+
   const [permission, requestPermission] = useCameraPermissions();
   const [isScanning, setIsScanning] = useState(false);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [tempInvitado, setTempInvitado] = useState("");
+  const [nombreInvitado, setNombreInvitadoLocal] = useState("");
+  const [nombreEstilista, setNombreEstilistaLocal] = useState("");
+
   const isExpoGo = Constants.appOwnership === "expo";
 
   useEffect(() => {
-    return () => {
-    };
-  }, []);
+    if (!permission?.granted) {
+      requestPermission();
+    }
+  }, [permission]);
 
   if (isExpoGo) {
     return (
@@ -27,13 +44,6 @@ export default function ScannerScreen({ role }: { role?: string }) {
       </View>
     );
   }
-//to save new comit
-  useEffect(() => {
-
-    if (!permission?.granted) {
-      requestPermission();
-    }
-  }, [permission]);
 
   if (!permission) {
     return (
@@ -52,7 +62,6 @@ export default function ScannerScreen({ role }: { role?: string }) {
   }
 
   const extractInvitado = (data: string): string | null => {
-
     try {
       if (data.startsWith("{")) {
         const parsed = JSON.parse(data);
@@ -60,8 +69,7 @@ export default function ScannerScreen({ role }: { role?: string }) {
       }
 
       if (data.includes("invitado=")) {
-        const extracted = data.split("invitado=")[1];
-        return extracted;
+        return data.split("invitado=")[1];
       }
 
       if (data.includes("@")) {
@@ -69,33 +77,39 @@ export default function ScannerScreen({ role }: { role?: string }) {
       }
 
       return null;
-    } catch (err) {
+    } catch {
       return null;
     }
   };
 
   const handleBarcodeScanned = ({ data }: { data: string }) => {
-
-    if (isScanning) {
-      return;
-    }
+    if (isScanning) return;
 
     setIsScanning(true);
 
     const invitado = extractInvitado(data);
 
     if (invitado) {
-      setInvitadoEmail(invitado.trim().toLowerCase());
-
-      if (role === "invitado") {
-        router.replace("/invitado");
-      } else if (role === "usuario") {
-        router.replace("/usuario");
-      } else {
-        router.replace("/invitado");
-      }
+      setTempInvitado(invitado.trim().toLowerCase());
+      setModalVisible(true);
     } else {
       setIsScanning(false);
+    }
+  };
+
+  const handleConfirm = () => {
+    setInvitadoEmail(tempInvitado);
+    setNombreInvitado(nombreInvitado);
+    setNombreEstilista(nombreEstilista);
+
+    setModalVisible(false);
+
+    if (role === "invitado") {
+      router.replace("/invitado");
+    } else if (role === "usuario") {
+      router.replace("/usuario");
+    } else {
+      router.replace("/invitado");
     }
   };
 
@@ -105,14 +119,7 @@ export default function ScannerScreen({ role }: { role?: string }) {
         style={styles.camera}
         facing="back"
         barcodeScannerSettings={{
-          barcodeTypes: [
-            "qr",
-            "pdf417",
-            "aztec",
-            "datamatrix",
-            "code128",
-            "ean13",
-          ],
+          barcodeTypes: ["qr", "pdf417", "aztec", "datamatrix", "code128", "ean13"],
         }}
         onBarcodeScanned={handleBarcodeScanned}
       />
@@ -120,6 +127,33 @@ export default function ScannerScreen({ role }: { role?: string }) {
       <View style={styles.overlay}>
         <Text style={styles.scanText}>Escanea el código QR del invitado</Text>
       </View>
+
+      {/* Modal for names */}
+      <Modal visible={modalVisible} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Datos del Invitado</Text>
+
+            <TextInput
+              placeholder="Nombre del invitado"
+              style={styles.input}
+              value={nombreInvitado}
+              onChangeText={setNombreInvitadoLocal}
+            />
+
+            <TextInput
+              placeholder="Nombre del estilista"
+              style={styles.input}
+              value={nombreEstilista}
+              onChangeText={setNombreEstilistaLocal}
+            />
+
+            <TouchableOpacity style={styles.button} onPress={handleConfirm}>
+              <Text style={styles.buttonText}>Continuar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -136,6 +170,40 @@ const styles = StyleSheet.create({
   scanText: {
     color: "white",
     fontSize: 18,
+    fontWeight: "600",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 20,
+  },
+  modalBox: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  input: {
+    backgroundColor: "#f2f2f2",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  button: {
+    backgroundColor: "#000",
+    padding: 14,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  buttonText: {
+    color: "white",
+    textAlign: "center",
     fontWeight: "600",
   },
   center: {
