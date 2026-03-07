@@ -15,21 +15,20 @@ import {
   useInvitado,
   useNombreEstilista,
   useNombreInvitado,
+  useRole,
 } from "../context/InvitadoContext";
 
 export default function ScannerScreen({ role }: { role?: string }) {
   const { setInvitadoEmail } = useInvitado();
   const { setNombreInvitado } = useNombreInvitado();
   const { setNombreEstilista } = useNombreEstilista();
-
+  const { setRole } = useRole();
   const [permission, requestPermission] = useCameraPermissions();
   const [isScanning, setIsScanning] = useState(false);
-
   const [modalVisible, setModalVisible] = useState(false);
   const [tempInvitado, setTempInvitado] = useState("");
   const [nombreInvitado, setNombreInvitadoLocal] = useState("");
   const [nombreEstilista, setNombreEstilistaLocal] = useState("");
-
   const isExpoGo = Constants.appOwnership === "expo";
 
   // Expo Go cannot use scanner → redirect to InvitadoIndex modal
@@ -103,6 +102,7 @@ export default function ScannerScreen({ role }: { role?: string }) {
   };
 
   const handleConfirm = () => {
+    setRole("invitado");
     setInvitadoEmail(tempInvitado);
     setNombreInvitado(nombreInvitado);
     setNombreEstilista(nombreEstilista);
@@ -141,6 +141,7 @@ export default function ScannerScreen({ role }: { role?: string }) {
               style={styles.input}
               value={nombreInvitado}
               onChangeText={setNombreInvitadoLocal}
+              placeholderTextColor="#000"
             />
 
             <TextInput
@@ -148,6 +149,7 @@ export default function ScannerScreen({ role }: { role?: string }) {
               style={styles.input}
               value={nombreEstilista}
               onChangeText={setNombreEstilistaLocal}
+              placeholderTextColor="#000"
             />
 
             <TouchableOpacity style={styles.button} onPress={handleConfirm}>
