@@ -18,6 +18,7 @@ import Button_style2 from "../../components/Button_style2";
 import GradientBackground from "../../components/GradientBackground";
 import Logo from "../../components/Logo";
 import { auth, db } from "../../services/firestore/firebase";
+
 import {
   useInvitado,
   useNombreEstilista,
@@ -31,30 +32,43 @@ export default function InvitadoIndex() {
   const { nombreInvitado, setNombreInvitado } = useNombreInvitado();
   const { nombreEstilista, setNombreEstilista } = useNombreEstilista();
   const { role, setRole } = useRole();
+
   const params = useLocalSearchParams<{ from?: string }>();
   const isExpoGo = Constants.appOwnership === "expo";
+
   const [isCocinaOpen, setIsCocinaOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState("");
+
   const [showInvitadoModal, setShowInvitadoModal] = useState(false);
   const [invitadoInput, setInvitadoInput] = useState("invitado_1@sovranogourmet.com");
   const [nombreInvitadoInput, setNombreInvitadoInput] = useState("");
   const [nombreEstilistaInput, setNombreEstilistaInput] = useState("");
+
   const resetContext = useResetContext();
 
+  // ⭐ Handle navigation logic for Expo Go vs Production
   useEffect(() => {
-  // Only open modal if coming from login AND no invitadoEmail yet
-  if (params.from === "login" && !invitadoEmail) {
-    if (isExpoGo) {
-      setShowInvitadoModal(true);
-    } else {
-      router.replace("/invitado/scanner");
+    // If coming from scanner → values already set → do NOT open modal
+    if (params.from === "scanner") {
+      router.setParams({ from: undefined });
+      return;
     }
 
-    // ⭐ Prevent this effect from running again
-    router.setParams({ from: undefined });
-  }
-}, [params.from, invitadoEmail]);
+    // Coming from login and no invitadoEmail yet
+    if (params.from === "login" && !invitadoEmail) {
+      if (isExpoGo) {
+        // Expo Go → modal
+        setShowInvitadoModal(true);
+      } else {
+        // Production → scanner
+        router.replace("/invitado/scanner");
+      }
+    }
 
+    router.setParams({ from: undefined });
+  }, [params.from, invitadoEmail]);
+
+  // ⭐ Listen to cocina open/close state
   useEffect(() => {
     const ref = doc(db, "counters", "cocina");
     const unsub = onSnapshot(ref, (snap) => {
@@ -100,6 +114,7 @@ export default function InvitadoIndex() {
         }}
       />
 
+      {/* ⭐ Expo Go modal */}
       <Modal visible={showInvitadoModal} transparent animationType="fade">
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -153,6 +168,7 @@ export default function InvitadoIndex() {
         </KeyboardAvoidingView>
       </Modal>
 
+      {/* ⭐ Main UI */}
       <GradientBackground>
         <View style={styles.container}>
           <Logo />

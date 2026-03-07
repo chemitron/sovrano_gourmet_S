@@ -11,7 +11,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useInvitado, useNombreEstilista, useNombreInvitado } from "../context/InvitadoContext";
+import {
+  useInvitado,
+  useNombreEstilista,
+  useNombreInvitado,
+} from "../context/InvitadoContext";
 
 export default function ScannerScreen({ role }: { role?: string }) {
   const { setInvitadoEmail } = useInvitado();
@@ -28,22 +32,23 @@ export default function ScannerScreen({ role }: { role?: string }) {
 
   const isExpoGo = Constants.appOwnership === "expo";
 
-  useEffect(() => {
-    if (!permission?.granted) {
-      requestPermission();
-    }
-  }, [permission]);
-
+  // Expo Go cannot use scanner → redirect to InvitadoIndex modal
   if (isExpoGo) {
     return (
       <View style={styles.center}>
         <Text style={styles.warning}>El escáner no funciona en Expo Go.</Text>
         <Text style={styles.subtext}>
-          Instala la app desde TestFlight o usa un build de producción.
+          Usa TestFlight o un build de producción.
         </Text>
       </View>
     );
   }
+
+  useEffect(() => {
+    if (!permission?.granted) {
+      requestPermission();
+    }
+  }, [permission]);
 
   if (!permission) {
     return (
@@ -104,13 +109,10 @@ export default function ScannerScreen({ role }: { role?: string }) {
 
     setModalVisible(false);
 
-    if (role === "invitado") {
-      router.replace("/invitado");
-    } else if (role === "usuario") {
-      router.replace("/usuario");
-    } else {
-      router.replace("/invitado");
-    }
+    router.replace({
+      pathname: "/invitado",
+      params: { from: "scanner" },
+    });
   };
 
   return (
@@ -128,7 +130,7 @@ export default function ScannerScreen({ role }: { role?: string }) {
         <Text style={styles.scanText}>Escanea el código QR del invitado</Text>
       </View>
 
-      {/* Modal for names */}
+      {/* Modal */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalBox}>
