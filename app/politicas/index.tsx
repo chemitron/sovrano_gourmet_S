@@ -29,9 +29,9 @@ export default function PoliciesIndex() {
         <TitleText>Política de Privacidad de Sovrano</TitleText>
         <ScrollView style={{ marginVertical: 10 }}>
           <Text style={styles.modalText}>
-            Sovrano respeta tu privacidad. Toda la información personal que
+            Sovrano Gourmet respeta tu privacidad. Toda la información personal que
             compartes con nosotros se utiliza únicamente para brindarte nuestros
-            servicios de belleza y bienestar.{"\n\n"}
+            servicios de gastronomia.{"\n\n"}
             No compartimos, vendemos ni transferimos tus datos a terceros bajo
             ninguna circunstancia.{"\n\n"}
             Tus datos se almacenan de manera segura y se utilizan solo para
@@ -58,24 +58,6 @@ export default function PoliciesIndex() {
               onPress={() => setPrivacyVisible(true)}
             />
         </View>
-  <View style={{ padding: 10 }}>
-            <Button_style2
-              title="Política de Privacidad"
-              onPress={() => setPrivacyVisible(true)}
-            />
-  </View>
-  <View style={{ padding: 10 }}>
-            <Button_style2
-              title="Política de Privacidad"
-              onPress={() => setPrivacyVisible(true)}
-            />
-  </View>
-   <View style={{ padding: 10 }}>
-            <Button_style2
-              title="Política de Privacidad"
-              onPress={() => setPrivacyVisible(true)}
-            />
-            </View>
         </ScrollView>
       </GradientBackground>
   );
