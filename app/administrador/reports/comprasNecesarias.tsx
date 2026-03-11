@@ -1,15 +1,19 @@
 import { Stack } from "expo-router";
 import {
-  collection, doc,
+  collection,
+  doc,
   onSnapshot,
   orderBy,
-  query, setDoc,
+  query,
+  setDoc,
 } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
-  Text, TextInput, TouchableOpacity,
+  Text,
+  TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 import GradientBackground from "../../../components/GradientBackground";
@@ -19,9 +23,14 @@ import { Ingredient } from "../../../src/types";
 export default function ComprasNecesarias() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Lista compartida en Firestore
   const [savedList, setSavedList] = useState<any[]>([]);
+
+  // Búsqueda para agregar manualmente
   const [search, setSearch] = useState("");
 
+  // 1. Cargar todos los ingredientes
   useEffect(() => {
     const q = query(collection(db, "ingredients"), orderBy("ingId", "asc"));
 
@@ -38,49 +47,50 @@ export default function ComprasNecesarias() {
     return () => unsub();
   }, []);
 
+  // 2. Cargar lista compartida de comprasNecesarias
   useEffect(() => {
-    const ref = doc(db,"adminReports","comprasNecesrias");
+    const ref = doc(db, "adminReports", "comprasNecesarias");
 
-    const unsub = onSnapshot(ref,(snap) =>{
-      if(snap.exists()){
-        const data = snap.data() as {items?:any[]};
-        setSavedList(data.items||[]);
-      }else{
+    const unsub = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as { items?: any[] };
+        setSavedList(data.items || []);
+      } else {
         setSavedList([]);
       }
     });
-    return()=>unsub();
-  },[]);
 
-  if (loading) return null;
+    return () => unsub();
+  }, []);
 
-  // Filter ingredients that need restocking
-  const lowStock = ingredients.filter(
-    (ing) => ing.stock <= ing.minStock
-  );
+  // 3. Ingredientes con bajo inventario
+  const lowStock = ingredients
+    .filter((ing) => ing.stock <= ing.minStock)
+    .sort((a, b) => a.stock - b.stock);
 
-  // Sort by urgency (lowest stock first)
-  lowStock.sort((a, b) => a.stock - b.stock);
-
-  const filteredSearch = useMemo(()=>{
+  // 4. Resultados de búsqueda para agregar manualmente
+  const filteredSearch = useMemo(() => {
     if (!search.trim()) return [];
-    const term=search.toLowerCase();
+
+    const term = search.toLowerCase();
 
     return ingredients
-    .filter(
-      (ing)=>
-        ing.name.toLowerCase().includes(term)&&
-      !savedList.some((s)=>s.id == ing.id)
-    )
-    .slice(0,10);
-  },[search,ingredients,savedList]);
+      .filter(
+        (ing) =>
+          ing.name.toLowerCase().includes(term) &&
+          !savedList.some((s) => s.id === ing.id)
+      )
+      .slice(0, 10);
+  }, [search, ingredients, savedList]);
 
-  const saveList = async(newList:any[])=>{
-    const ref=doc(db,"adminReports","comprasNecesarias");
-    await setDoc(ref,{items: newList},{merge:true});
+  // 5. Guardar lista en Firestore
+  const saveList = async (newList: any[]) => {
+    const ref = doc(db, "adminReports", "comprasNecesarias");
+    await setDoc(ref, { items: newList }, { merge: true });
   };
 
-  const handleAddManual = (ing:Ingredient)=>{
+  // 6. Agregar ingrediente manualmente
+  const handleAddManual = (ing: Ingredient) => {
     const newItem = {
       id: ing.id,
       name: ing.name,
@@ -95,12 +105,15 @@ export default function ComprasNecesarias() {
     setSearch("");
   };
 
-  const handleRemove = (id:string)=>{
-    const newList = savedList.filter((item)=>item.id !== id);
+  // 7. Marcar como comprado (eliminar de la lista)
+  const handleRemove = (id: string) => {
+    const newList = savedList.filter((item) => item.id !== id);
+    saveList(newList);
   };
 
-  const mergedList =[
-    ...lowStock.filter((ing)=>!savedList.some((s)=>s.id === ing.id)),
+  // 8. Unir lowStock + lista guardada
+  const mergedList = [
+    ...lowStock.filter((ing) => !savedList.some((s) => s.id === ing.id)),
     ...savedList,
   ];
 
@@ -114,22 +127,29 @@ export default function ComprasNecesarias() {
       />
 
       <GradientBackground>
-        <ScrollView contentContainerStyle={styles.container}>
-          <TextInput
-            style={styles.search}
-            placeholder="Agregar ingrediente manualmente..."
-            placeholderTextColor="#333"
-            value={search}
-            onChangeText={setSearch}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Cargando ingredientes...</Text>
+          </View>
+        ) : (
+          <ScrollView contentContainerStyle={styles.container}>
+            {/* Búsqueda */}
+            <TextInput
+              style={styles.search}
+              placeholder="Agregar ingrediente manualmente..."
+              placeholderTextColor="#333"
+              value={search}
+              onChangeText={setSearch}
             />
 
-            {filteredSearch.length>0 &&(
+            {/* Resultados de búsqueda */}
+            {filteredSearch.length > 0 && (
               <View style={styles.searchResults}>
-                {filteredSearch.map((ing)=>(
+                {filteredSearch.map((ing) => (
                   <TouchableOpacity
                     key={ing.id}
                     style={styles.searchItem}
-                    onPress={()=>handleAddManual(ing)}
+                    onPress={() => handleAddManual(ing)}
                   >
                     <Text style={styles.searchText}>{ing.name}</Text>
                   </TouchableOpacity>
@@ -137,42 +157,46 @@ export default function ComprasNecesarias() {
               </View>
             )}
 
+            {/* Lista final */}
             {mergedList.length === 0 && (
               <Text style={styles.empty}>No hay ingredientes por comprar</Text>
             )}
-            {mergedList.map((ing)=>{
-              const suggested = Math.max(ing.minStock - ing.stock,0);
 
-              return(
+            {mergedList.map((ing) => {
+              const suggested = Math.max(ing.minStock - ing.stock, 0);
+
+              return (
                 <View key={ing.id} style={styles.card}>
                   <Text style={styles.name}>{ing.name}</Text>
+
                   <Text style={styles.detail}>
                     Inventario actual:{" "}
-                    <Text style={styles.bold}>{ing.stock}</Text>{ing.unit}
+                    <Text style={styles.bold}>{ing.stock}</Text> {ing.unit}
                   </Text>
+
                   <Text style={styles.detail}>
-                    Inventario minimo:{" "}
-                    <Text style={styles.bold}>{ing.minStock}</Text>{ing.unit}
+                    Inventario mínimo:{" "}
+                    <Text style={styles.bold}>{ing.minStock}</Text> {ing.unit}
                   </Text>
+
                   <Text style={styles.urgent}>
                     Compra sugerida:{" "}
                     <Text style={styles.bold}>
                       {suggested} {ing.unit}
                     </Text>
-                    </Text>
+                  </Text>
 
-                    <TouchableOpacity
-                      style={styles.buyButton}
-                      onPress={()=>handleRemove(ing.id)}
-                      >
-                        <Text style={styles.buyText}>Comprado</Text>
-                    </TouchableOpacity>                  
+                  <TouchableOpacity
+                    style={styles.buyButton}
+                    onPress={() => handleRemove(ing.id)}
+                  >
+                    <Text style={styles.buyText}>Comprado</Text>
+                  </TouchableOpacity>
                 </View>
               );
             })}
-
-          
-        </ScrollView>
+          </ScrollView>
+        )}
       </GradientBackground>
     </>
   );
@@ -183,29 +207,39 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 20,
   },
-  search:{
-    backgroundColor:"#fff",
-    padding:12,
-    borderRadius:8,
-    borderWidth:1,
-    borderColor:"#ccc",
-    fontSize:16,
+  loadingContainer: {
+    flex: 1,
+    padding: 20,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  searchResults:{
-    backgroundColor:"#fff",
-    borderRadius:8,
-    borderWidth:1,
-    borderColor:"#ccc",
-    overflow:"hidden",
+  loadingText: {
+    fontSize: 16,
+    color: "#444",
   },
-  searchItem:{
-    padding:12,
-    borderBottomWidth:1,
-    borderBottomColor:"#eee",
+  search: {
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    fontSize: 16,
   },
-  searchText:{
-    fontSize:16,
-    color:"#333",
+  searchResults: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    overflow: "hidden",
+  },
+  searchItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  searchText: {
+    fontSize: 16,
+    color: "#333",
   },
   empty: {
     textAlign: "center",
@@ -239,15 +273,15 @@ const styles = StyleSheet.create({
     color: "#8B0000",
     fontWeight: "600",
   },
-  buyButton:{
-    marginTop:10,
-    backgroundColor:"#3A2F2F",
-    padding:10,
-    borderRadius:8,
+  buyButton: {
+    marginTop: 10,
+    backgroundColor: "#3A2F2F",
+    padding: 10,
+    borderRadius: 8,
   },
-  buyText:{
-    color:"white",
-    textAlign:"center",
-    fontWeight:"600",
-  }
+  buyText: {
+    color: "white",
+    textAlign: "center",
+    fontWeight: "600",
+  },
 });

@@ -233,7 +233,7 @@ export default function OrderScreen() {
 
       <View style={{ flex: 1, padding: 20 }}>
         <Button_style2
-          title="Pagar"
+          title="Ordenar"
           onPress={handleCuentaPersonal}
         />
         <Text style={styles.title}>Orden #{orderNumber ?? "..."}</Text>
