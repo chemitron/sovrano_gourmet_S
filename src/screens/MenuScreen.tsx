@@ -86,7 +86,7 @@ export default function MenuScreen() {
   // -----------------------------------------------------
   const visibleItems = items.filter((item) => {
     if (item.soloEmpleado) {
-      return role === "empleado" || role === "admin" || role === "chef" || role === "recepcion";
+      return role === "empleado" || role === "admin" || role === "chef" || role === "recepcion" || role === "contador";
     }
     return true;
   });
@@ -148,7 +148,7 @@ export default function MenuScreen() {
   // PRICE BY ROLE
   // -----------------------------------------------------
   function getPriceForRole(item: MenuItem) {
-  const employeeRoles = ["empleado", "admin", "chef", "recepcion"];
+  const employeeRoles = ["empleado", "admin", "chef", "recepcion", "contador"];
   const safeRole = role ?? ""; // role comes from context
 
   return employeeRoles.includes(safeRole)

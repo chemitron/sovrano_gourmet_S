@@ -64,9 +64,9 @@ export default function Manejo_empleadosIndex() {
   const filteredUsers = users.filter(u => {
     switch (selectedFilter) {
       case 'empleadoActivo':
-        return (u.role === 'admin' || u.role === 'empleado' || u.role === 'recepcion' || u.role === 'chef') && u.activo === true;
+        return (u.role === 'admin' || u.role === 'empleado' || u.role === 'recepcion' || u.role === 'chef' || u.role === 'contador') && u.activo === true;
       case 'empleadoInactivo':
-        return (u.role === 'admin' || u.role === 'empleado' || u.role === 'recepcion' || u.role === 'chef') && u.activo === false;
+        return (u.role === 'admin' || u.role === 'empleado' || u.role === 'recepcion' || u.role === 'chef' || u.role === 'contador') && u.activo === false;
       case 'usuarioActivo':
         return u.role === 'usuario' && u.activo === true;
       case 'usuarioInactivo':

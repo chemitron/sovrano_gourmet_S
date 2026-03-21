@@ -132,7 +132,8 @@ export default function AdminCuentasScreen() {
       role === "empleado" ||
       role === "admin" ||
       role === "chef" ||
-      role === "recepcion";
+      role === "recepcion" ||
+      role === "contador";
 
     const isUsuarioRole =
       role === "usuario" || role === "invitado";
@@ -272,7 +273,7 @@ export default function AdminCuentasScreen() {
                         setConfirmVisible(true);
                       }}
                       disabled={
-                        currentRole === "recepcion" &&
+                        (currentRole === "recepcion" || currentRole === "contador") &&
                         acc.email === currentEmail
                       }
                     />
