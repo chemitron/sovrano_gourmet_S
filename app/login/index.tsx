@@ -1,10 +1,11 @@
 import NetInfo from "@react-native-community/netinfo";
+import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import { Stack, router } from "expo-router";
 import { sendPasswordResetEmail, signInAnonymously, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { deleteDoc, doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useState, } from "react";
+import { ActivityIndicator, Alert, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
 import Button_style2 from "../../components/Button_style2";
 import GradientBackground from "../../components/GradientBackground";
 import Logo from "../../components/Logo";
@@ -26,6 +27,10 @@ export default function LoginIndex() {
   const [passwordFocused, setPasswordFocused] = useState(false); 
   const firestore = getFirestore(); 
   const [isConnected, setIsConnected] = useState(true); 
+  const appVersion = Constants.expoConfig?.version || "0.0.0";
+  const iosBuildNumber = Constants.expoConfig?.ios?.buildNumber;
+  const androidVersionCode = Constants.expoConfig?.android?.versionCode;
+
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
@@ -323,6 +328,14 @@ export default function LoginIndex() {
           />
         </View>
       </ScrollView>
+            <View style={styles.versionContainer}>
+  <Text style={styles.versionText}>
+  Sovrano versión {appVersion}  
+  {Platform.OS === "ios" && ` (build ${iosBuildNumber})`}
+  {Platform.OS === "android" && ` (code ${androidVersionCode})`}
+</Text>
+
+</View>
 
     </GradientBackground>
     </>
@@ -415,4 +428,18 @@ modalButton: {
   borderRadius: 5,
   alignItems: 'center',
 },
+versionContainer: {
+  width: "100%",
+  alignItems: "center",
+  paddingVertical: 10,
+  position: "absolute",
+  bottom: 10,
+},
+
+versionText: {
+  color: "#fff",
+  fontSize: 12,
+  opacity: 0.8,
+},
+
 });
