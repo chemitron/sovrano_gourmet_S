@@ -18,11 +18,11 @@ import {
   useRole,
 } from "../context/InvitadoContext";
 
-export default function ScannerScreen({ role }: { role?: string }) {
+export default function ScannerScreen() {
   const { setInvitadoEmail } = useInvitado();
   const { setNombreInvitado } = useNombreInvitado();
   const { setNombreEstilista } = useNombreEstilista();
-  const { setRole } = useRole();
+  const { role, setRole } = useRole();
   const [permission, requestPermission] = useCameraPermissions();
   const [isScanning, setIsScanning] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -87,19 +87,31 @@ export default function ScannerScreen({ role }: { role?: string }) {
   };
 
   const handleBarcodeScanned = ({ data }: { data: string }) => {
-    if (isScanning) return;
+  if (isScanning) return;
 
-    setIsScanning(true);
+  setIsScanning(true);
 
-    const invitado = extractInvitado(data);
+  const invitado = extractInvitado(data);
 
-    if (invitado) {
-      setTempInvitado(invitado.trim().toLowerCase());
+  if (invitado) {
+    const cleaned = invitado.trim().toLowerCase();
+    setTempInvitado(cleaned);
+
+    if (role === "invitado") {
+      // ⭐ Invitado → pedir datos
       setModalVisible(true);
     } else {
-      setIsScanning(false);
+      // ⭐ Usuario → NO abrir modal
+      setInvitadoEmail(cleaned);
+      setNombreInvitado("usuario");
+      setNombreEstilista("usuario");
+
+      router.replace("/usuario/scanner");
     }
-  };
+  } else {
+    setIsScanning(false);
+  }
+};
 
   const handleConfirm = () => {
     setRole("invitado");
@@ -127,7 +139,7 @@ export default function ScannerScreen({ role }: { role?: string }) {
       />
 
       <View style={styles.overlay}>
-        <Text style={styles.scanText}>Escanea el código QR del invitado</Text>
+        <Text style={styles.scanText}>Escanea el código QR</Text>
       </View>
 
       {/* Modal */}

@@ -4,15 +4,10 @@ import { signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
-  View,
+  View
 } from "react-native";
 import Button_style2 from "../../components/Button_style2";
 import GradientBackground from "../../components/GradientBackground";
@@ -85,44 +80,6 @@ export default function RecepcionIndex() {
       />
 
       {/* -----------------------------------------------------
-          🟦 Expo Go QR Manual Modal
-      ----------------------------------------------------- */}
-      <Modal visible={showQrModal} transparent animationType="fade">
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={{ flex: 1 }}
-        >
-          <ScrollView
-            contentContainerStyle={styles.modalOverlay}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.modalBox}>
-              <Text style={styles.modalTitle}>Código QR (email invitado)</Text>
-
-              <TextInput
-                style={styles.modalInput}
-                placeholder="invitado_1@sovranogourmet.com"
-                value={qrInput}
-                onChangeText={setQrInput}
-                autoCapitalize="none"
-              />
-
-              <Button_style2
-                title="Aceptar"
-                onPress={handleQrSubmit}
-                disabled={qrInput.trim().length === 0}
-              />
-
-              <Button_style2
-                title="Cancelar"
-                onPress={() => setShowQrModal(false)}
-              />
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* -----------------------------------------------------
           MAIN UI
       ----------------------------------------------------- */}
       <GradientBackground>
@@ -150,18 +107,7 @@ export default function RecepcionIndex() {
 
             <Button_style2
               title="Cuentas con balances"
-              onPress={() => router.push("/recepcion/cuentas")}
-            />
-
-            <Button_style2
-              title="Balance para Código QR"
-              onPress={() => {
-                if (isExpoGo) {
-                  setShowQrModal(true);
-                } else {
-                  router.push("/recepcion/scanner");
-                }
-              }}
+              onPress={() => router.push("/contador/cuentas")}
             />
 
             <Button_style2 title="Cerrar sesión" onPress={handleLogout} />

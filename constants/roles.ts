@@ -5,4 +5,5 @@ export const ROLES = {
   ADMIN: 'admin',
   CHEF: 'chef',
   RECEPCION: 'recepcion',
+  CONTADOR: 'contador',
 };

@@ -31,8 +31,8 @@ export default function AdminCuentasScreen() {
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
   const [filter, setFilter] = useState<
-  "sinPagarUsuario"
-  >("sinPagarUsuario");
+  "sinPagarEmpleado"
+  >("sinPagarEmpleado");
 
   // ⭐ NEW — current user role + email
   const [currentRole, setCurrentRole] = useState<string | null>(null);
@@ -136,8 +136,8 @@ export default function AdminCuentasScreen() {
     const isUsuarioRole =
       role === "usuario" || role === "invitado";
 
-    if (filter === "sinPagarUsuario") {
-      return isUsuarioRole && acc.balance > 0;
+    if (filter === "sinPagarEmpleado") {
+      return isEmpleadoRole && acc.balance > 0;
     }
 
     return true;
@@ -160,18 +160,18 @@ export default function AdminCuentasScreen() {
             <TouchableOpacity
               style={[
                 styles.filterButton,
-                filter === "sinPagarUsuario" && styles.filterButtonActive,
+                filter === "sinPagarEmpleado" && styles.filterButtonActive,
               ]}
-              onPress={() => setFilter("sinPagarUsuario")}
+              onPress={() => setFilter("sinPagarEmpleado")}
             >
               <Text
                 style={[
                   styles.filterButtonText,
-                  filter === "sinPagarUsuario" &&
+                  filter === "sinPagarEmpleado" &&
                     styles.filterButtonTextActive,
                 ]}
               >
-                Sin pagar usuario
+                Sin pagar empleado
               </Text>
             </TouchableOpacity>
           </View>
@@ -223,7 +223,7 @@ export default function AdminCuentasScreen() {
                   </View>
                 ))}
 
-                {/* ⭐ Disable button if recepcion is viewing their own account */}
+                {/* ⭐ Disable button if contador is viewing their own account */}
                 {acc.balance > 0 && (
                   <View style={{ paddingTop: 10 }}>
                     <Button_style2
@@ -233,7 +233,7 @@ export default function AdminCuentasScreen() {
                         setConfirmVisible(true);
                       }}
                       disabled={
-                        currentRole === "recepcion" &&
+                        currentRole === "contador" &&
                         acc.email === currentEmail
                       }
                     />
