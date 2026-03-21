@@ -191,6 +191,12 @@ export default function LoginIndex() {
             params: { role: "recepcion", from: "login" }
           });
         break;
+      case 'contador':
+        router.push({
+            pathname: "/contador",
+            params: { role: "contador", from: "login" }
+          });
+        break;
       default:
         router.push({
             pathname: "/usuario",

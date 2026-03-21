@@ -116,13 +116,6 @@ export default function UsuarioIndex() {
     setNombreEstilista(nombreEstilistaInput.trim());
 
     setShowEstilistaModal(false);
-
-    // ⭐ Wait for context to update BEFORE navigating
-    setTimeout(() => {
-      if (!isExpoGo) {
-        router.push("/usuario");
-      }
-    }, 0);
   };
 
   const isFormValid = nombreEstilistaInput.trim().length > 0;
@@ -190,10 +183,6 @@ export default function UsuarioIndex() {
           </Text>
 
           <Text style={styles.welcomeText}>¡Nos alegra verte en Sovrano!</Text>
-
-          <View>
-            <Text style={styles.welcomeText}>Responsabilidad: {role}</Text>
-          </View>
 
           {!isCocinaOpen && (
             <Text
