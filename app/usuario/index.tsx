@@ -25,20 +25,18 @@ import {
   useNombreEstilista,
   useNombreInvitado,
   useResetContext,
+  useRole,
 } from "../../src/context/InvitadoContext";
 
 export default function UsuarioIndex() {
   const username = auth.currentUser?.displayName;
   const email = auth.currentUser?.email ?? null;
-
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Buenos días" : "Buenas tardes";
-
-  const [role, setRole] = useState<string | null>(null);
+  const { role, setRole } = useRole();
   const [uid, setUid] = useState<string | null>(null);
   const [isCocinaOpen, setIsCocinaOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState("");
-
   // ⭐ Context setters
   const { setInvitadoEmail } = useInvitado();
   const { setNombreInvitado } = useNombreInvitado();
@@ -51,10 +49,24 @@ export default function UsuarioIndex() {
   const [showEstilistaModal, setShowEstilistaModal] = useState(false);
   const [nombreEstilistaInput, setNombreEstilistaInput] = useState("");
 
-useEffect(() => {
-  setRole("usuario");
-}, []);
+    // -----------------------------------------------------
+  // 👤 3. Load user role
+  // -----------------------------------------------------
+  useEffect(() => {
+    const loadData = async () => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
 
+      const currentUid = currentUser.uid;
+      setUid(currentUid);
+
+      const userDoc = await getDoc(doc(db, "users", currentUid));
+      const fetchedRole = userDoc.data()?.role;
+      setRole(fetchedRole || "usuario");
+    };
+
+    loadData();
+  }, []);
 
   // -----------------------------------------------------
   // 🚀 1. Show modal BEFORE scanner (fixed double-open)
@@ -78,25 +90,6 @@ useEffect(() => {
       }
     });
     return () => unsub();
-  }, []);
-
-  // -----------------------------------------------------
-  // 👤 3. Load user role
-  // -----------------------------------------------------
-  useEffect(() => {
-    const loadData = async () => {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-
-      const currentUid = currentUser.uid;
-      setUid(currentUid);
-
-      const userDoc = await getDoc(doc(db, "users", currentUid));
-      const fetchedRole = userDoc.data()?.role;
-      setRole(fetchedRole);
-    };
-
-    loadData();
   }, []);
 
   // -----------------------------------------------------
