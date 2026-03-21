@@ -36,6 +36,8 @@ const homeRoute =
     ? "/invitado"
     : role === "recepcion"
     ? "/recepcion"
+    : role === "contador"
+    ? "/contador"
     : role === "chef"
     ? "/chef"
     : "/login";

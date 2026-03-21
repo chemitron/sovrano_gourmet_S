@@ -14,7 +14,7 @@ import GradientBackground from "../../components/GradientBackground";
 import { auth, db } from "../../services/firestore/firebase";
 import { useResetContext } from "../../src/context/InvitadoContext";
 
-export default function RecepcionIndex() {
+export default function ContadorIndex() {
   const windowDimensions = useWindowDimensions();
   const windowWidth = windowDimensions.width;
   const windowHeight = windowDimensions.height;
@@ -57,24 +57,12 @@ export default function RecepcionIndex() {
     loadData();
   }, []);
 
-  // Handle QR submission (Expo Go)
-  const handleQrSubmit = () => {
-    if (!qrInput.trim()) return;
-
-    setShowQrModal(false);
-
-    router.push({
-      pathname: "/recepcion/cuentas",
-      params: { invitado: qrInput.trim() },
-    });
-  };
-
   return (
     <>
       <Stack.Screen
         options={{
           headerTitleAlign: "center",
-          headerTitle: "Recepción",
+          headerTitle: "Contador",
           headerBackVisible: false,
         }}
       />
@@ -93,7 +81,7 @@ export default function RecepcionIndex() {
             }}
           >
             <Text style={styles.welcomeText}>
-              {`${greeting}, ${username || "recepción"} 👋`}
+              {`${greeting}, ${username || "contador"} 👋`}
             </Text>
 
             <Text style={styles.welcomeText}>

@@ -147,7 +147,7 @@ export default function AdminCuentasScreen() {
     <>
       <Stack.Screen
         options={{
-          headerTitle: "Cuentas de Clientes",
+          headerTitle: "Cuentas de Empleados",
           headerTitleAlign: "center",
         }}
       />

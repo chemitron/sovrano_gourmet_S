@@ -68,7 +68,7 @@ export default function ChefOrdenes() {
 
 const isStaffOrder = (order: Order) => {
   const role = order.role || "";
-  return role === "empleado" || role === "admin" || role === "recepcion" || role === "chef";
+  return role === "empleado" || role === "admin" || role === "recepcion" || role === "chef" || role === "contador";
 };
 
 const staffOrders = orders.filter(isStaffOrder);

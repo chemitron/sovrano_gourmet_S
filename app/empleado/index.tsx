@@ -154,6 +154,15 @@ useEffect(() => {
     />
   </View>
 )}
+
+{(role === "contador") && (
+  <View style={{ paddingBottom: 10 }}>
+    <Button_style2
+      title="Contador"
+      onPress={() => router.push("/contador")}
+    />
+  </View>
+)}
         </View>
       </View>
     </GradientBackground>
