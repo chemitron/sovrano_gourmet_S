@@ -120,7 +120,7 @@ export default function UsuarioIndex() {
     // ⭐ Wait for context to update BEFORE navigating
     setTimeout(() => {
       if (!isExpoGo) {
-        router.push("/usuario/menu");
+        router.push("/usuario");
       }
     }, 0);
   };
