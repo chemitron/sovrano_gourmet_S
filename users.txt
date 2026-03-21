@@ -11,3 +11,5 @@ npx expo start
 eas build -p ios --profile production
 eas build -p android --profile production
 eas submit -p ios --latest
+eas update --branch production --message "Fix contador filter"
+
