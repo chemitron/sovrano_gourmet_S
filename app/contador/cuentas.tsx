@@ -131,7 +131,7 @@ export default function AdminCuentasScreen() {
       role === "empleado" ||
       role === "admin" ||
       role === "chef" ||
-      role === "recepcion"
+      role === "recepcion" ||
       role === "contador";
 
     const isUsuarioRole =
