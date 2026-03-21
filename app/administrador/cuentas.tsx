@@ -73,35 +73,42 @@ export default function AdminCuentasScreen() {
 
   // ⭐ Load orders for each account
   useEffect(() => {
-    accounts.forEach((acc) => {
-      const field =
-        acc.username?.toLowerCase() === "invitado"
-          ? "invitado"
-          : "userEmail";
+  const unsubscribes: (() => void)[] = [];
 
-      const q = query(
-        collection(db, "orders"),
-        where(field, "==", acc.email),
-        where("chargedToAccount", "==", true),
-        where("accountPaid", "==", false),
-        where("status", "!=", "cancelado")
-      );
+  accounts.forEach((acc) => {
+    const field =
+      acc.username?.toLowerCase() === "invitado"
+        ? "invitado"
+        : "userEmail";
 
-      const unsub = onSnapshot(q, (snap) => {
-        const list = snap.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        })) as Order[];
+    const q = query(
+      collection(db, "orders"),
+      where(field, "==", acc.email),
+      where("chargedToAccount", "==", true),
+      where("accountPaid", "==", false),
+      where("status", "!=", "cancelado")
+    );
 
-        setOrders((prev) => ({
-          ...prev,
-          [acc.email]: list,
-        }));
-      });
+    const unsub = onSnapshot(q, (snap) => {
+      const list = snap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      })) as Order[];
 
-      return () => unsub();
+      setOrders((prev) => ({
+        ...prev,
+        [acc.email]: list,
+      }));
     });
-  }, [accounts]);
+
+    unsubscribes.push(unsub);
+    global.addUnsubscribe?.(unsub); // ⭐ register globally
+  });
+
+  return () => {
+    unsubscribes.forEach((fn) => fn());
+  };
+}, [accounts]);
 
   // ⭐ Mark account as paid
   const markAsPaid = async (email: string) => {

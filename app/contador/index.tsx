@@ -33,6 +33,7 @@ export default function ContadorIndex() {
 
   const handleLogout = async () => {
     try {
+      global.unsubscribeAll?.();
       await signOut(auth);
       resetContext();
       router.dismissAll();
