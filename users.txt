@@ -10,3 +10,4 @@ email                       username            role        phoneNumber     ID
 npx expo start
 eas build -p ios --profile production
 eas build -p android --profile production
+eas submit -p ios --latest
