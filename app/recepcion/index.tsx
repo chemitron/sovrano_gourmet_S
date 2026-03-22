@@ -69,7 +69,7 @@ export default function RecepcionIndex() {
     setShowQrModal(false);
 
     router.push({
-      pathname: "/recepcion/cuentas",
+      pathname: "/recepcion/cuentaqr",
       params: { invitado: qrInput.trim() },
     });
   };

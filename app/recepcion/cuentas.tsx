@@ -22,17 +22,14 @@ import GradientBackground from "../../components/GradientBackground";
 import { auth, db } from "../../services/firestore/firebase";
 import { Account, Order } from "../../src/types";
 
-export default function AdminCuentasScreen() {
+export default function RecepcionCuentasScreen() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [orders, setOrders] = useState<Record<string, Order[]>>({});
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
-
-  const [filter, setFilter] = useState<
-  "sinPagarUsuario"
-  >("sinPagarUsuario");
+  const [filter, setFilter] = useState<"invitado" | "usuario">("invitado");
 
   // ⭐ NEW — current user role + email
   const [currentRole, setCurrentRole] = useState<string | null>(null);
@@ -130,26 +127,84 @@ export default function AdminCuentasScreen() {
 
   // ⭐ Filtering logic
   const filteredAccounts = accounts.filter((acc) => {
+  const accountOrders = orders[acc.email] ?? [];
+  const role = accountOrders[0]?.role?.toLowerCase() ?? null;
 
-    const accountOrders = orders[acc.email] ?? [];
-    const role = accountOrders[0]?.role?.toLowerCase() ?? null;
+  const isUsuarioRole = role === "usuario";
+  const isInvitadoRole = role === "invitado";
 
-    const isEmpleadoRole =
-      role === "empleado" ||
-      role === "admin" ||
-      role === "chef" ||
-      role === "recepcion" ||
-      role === "contador";
+  return (
+    (filter === "usuario" && isUsuarioRole) ||
+    (filter === "invitado" && isInvitadoRole)
+  );
+});
 
-    const isUsuarioRole =
-      role === "usuario" || role === "invitado";
+  const invitadoAccounts = filteredAccounts.filter((acc) => {
+  const accountOrders = orders[acc.email] ?? [];
+  const role = accountOrders[0]?.role?.toLowerCase() ?? null;
+  return role === "invitado";
+});
 
-    if (filter === "sinPagarUsuario") {
-      return isUsuarioRole && acc.balance > 0;
-    }
+const usuarioAccounts = filteredAccounts.filter((acc) => {
+  const accountOrders = orders[acc.email] ?? [];
+  const role = accountOrders[0]?.role?.toLowerCase() ?? null;
+  return role === "usuario";
+});
 
-    return true;
-  });
+const renderAccountCard = (acc: Account, accountOrders: Order[]) => (
+  <View key={acc.email} style={styles.accountCard}>
+    <View style={styles.topRow}>
+      <Text style={styles.topItem}>{acc.username}</Text>
+      <Text style={styles.topItem}>Saldo: ${acc.balance.toFixed(2)}</Text>
+    </View>
+
+    <Text style={styles.sectionTitle}>Órdenes pendientes</Text>
+
+    {accountOrders.length === 0 && (
+      <Text style={styles.emptyText}>No hay órdenes pendientes</Text>
+    )}
+
+    {accountOrders.map((order) => (
+      <View key={order.id} style={{ marginBottom: 12 }}>
+        <View style={styles.rowTop}>
+          <Text style={styles.orderText}>
+            Orden #{order.orderNumber} — ${order.total}
+          </Text>
+        </View>
+
+        <View style={styles.rowBottom}>
+          <Text style={styles.orderText}>
+            Cargado a cuenta: {order.chargedToAccount ? "Sí" : "No"}
+          </Text>
+
+          <TouchableOpacity
+            onPress={() => {
+              setSelectedOrder(order);
+              setModalVisible(true);
+            }}
+          >
+            <Text style={styles.detailsLink}>Ver detalles</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    ))}
+
+    {acc.balance > 0 && (
+      <View style={{ paddingTop: 10 }}>
+        <Button_style2
+          title="Marcar como Pagada"
+          onPress={() => {
+            setPendingEmail(acc.email);
+            setConfirmVisible(true);
+          }}
+          disabled={
+            currentRole === "recepcion" && acc.email === currentEmail
+          }
+        />
+      </View>
+    )}
+  </View>
+);
 
   return (
     <>
@@ -161,97 +216,58 @@ export default function AdminCuentasScreen() {
       />
 
       <GradientBackground>
-        <ScrollView contentContainerStyle={styles.container}>
-          {/* FILTERS */}
-          <View style={styles.filterRow}>
+  <ScrollView contentContainerStyle={styles.container}>
 
-            <TouchableOpacity
-              style={[
-                styles.filterButton,
-                filter === "sinPagarUsuario" && styles.filterButtonActive,
-              ]}
-              onPress={() => setFilter("sinPagarUsuario")}
-            >
-              <Text
-                style={[
-                  styles.filterButtonText,
-                  filter === "sinPagarUsuario" &&
-                    styles.filterButtonTextActive,
-                ]}
-              >
-                Sin pagar usuario
-              </Text>
-            </TouchableOpacity>
-          </View>
+    {/* FILTER BUTTONS */}
+    <View style={styles.filterRow}>
+      <TouchableOpacity
+        style={[
+          styles.filterButton,
+          filter === "invitado" && styles.filterButtonActive,
+        ]}
+        onPress={() => setFilter("invitado")}
+      >
+        <Text
+          style={[
+            styles.filterButtonText,
+            filter === "invitado" && styles.filterButtonTextActive,
+          ]}
+        >
+          Invitado
+        </Text>
+      </TouchableOpacity>
 
-          {/* ACCOUNT CARDS */}
-          {filteredAccounts.map((acc) => {
-            const accountOrders = orders[acc.email] ?? [];
+      <TouchableOpacity
+        style={[
+          styles.filterButton,
+          filter === "usuario" && styles.filterButtonActive,
+        ]}
+        onPress={() => setFilter("usuario")}
+      >
+        <Text
+          style={[
+            styles.filterButtonText,
+            filter === "usuario" && styles.filterButtonTextActive,
+          ]}
+        >
+          Usuario
+        </Text>
+      </TouchableOpacity>
+    </View>
 
-            return (
-              <View key={acc.email} style={styles.accountCard}>
-                <View style={styles.topRow}>
-                  <Text style={styles.topItem}>{acc.username}</Text>
-                  <Text style={styles.topItem}>
-                    Saldo: ${acc.balance.toFixed(2)}
-                  </Text>
-                </View>
-
-                <Text style={styles.sectionTitle}>Órdenes pendientes</Text>
-
-                {accountOrders.length === 0 && (
-                  <Text style={styles.emptyText}>
-                    No hay órdenes pendientes
-                  </Text>
-                )}
-
-                {accountOrders.map((order) => (
-                  <View key={order.id} style={{ marginBottom: 12 }}>
-                    <View style={styles.rowTop}>
-                      <Text style={styles.orderText}>
-                        Orden #{order.orderNumber} — ${order.total}
-                      </Text>
-                    </View>
-
-                    <View style={styles.rowBottom}>
-                      <Text style={styles.orderText}>
-                        Cargado a cuenta:{" "}
-                        {order.chargedToAccount ? "Sí" : "No"}
-                      </Text>
-
-                      <TouchableOpacity
-                        onPress={() => {
-                          setSelectedOrder(order);
-                          setModalVisible(true);
-                        }}
-                      >
-                        <Text style={styles.detailsLink}>Ver detalles</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ))}
-
-                {/* ⭐ Disable button if recepcion is viewing their own account */}
-                {acc.balance > 0 && (
-                  <View style={{ paddingTop: 10 }}>
-                    <Button_style2
-                      title="Marcar como Pagada"
-                      onPress={() => {
-                        setPendingEmail(acc.email);
-                        setConfirmVisible(true);
-                      }}
-                      disabled={
-                        currentRole === "recepcion" &&
-                        acc.email === currentEmail
-                      }
-                    />
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </ScrollView>
-      </GradientBackground>
+    {/* FILTERED ACCOUNT LIST */}
+    {filteredAccounts
+      .filter((acc) => {
+        const accountOrders = orders[acc.email] ?? [];
+        const role = accountOrders[0]?.role?.toLowerCase() ?? null;
+        return role === filter;
+      })
+      .map((acc) => {
+        const accountOrders = orders[acc.email] ?? [];
+        return renderAccountCard(acc, accountOrders);
+      })}
+  </ScrollView>
+</GradientBackground>
 
       {/* DETAILS MODAL */}
       <Modal visible={modalVisible} transparent animationType="fade">
@@ -489,4 +505,23 @@ const styles = StyleSheet.create({
   filterButtonTextActive: {
     color: "white",
   },
+  columnsContainer: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  width: "100%",
+  paddingHorizontal: 10,
+},
+
+column: {
+  flex: 1,
+  paddingHorizontal: 5,
+},
+
+columnTitle: {
+  fontSize: 18,
+  fontWeight: "700",
+  marginBottom: 10,
+  textAlign: "center",
+  color: "#3A2F2F",
+},
 });

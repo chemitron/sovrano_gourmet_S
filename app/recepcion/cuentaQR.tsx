@@ -25,13 +25,11 @@ import { Account, Order } from "../../src/types";
 export default function CuentaQRScreen() {
   // ⭐ Receive scanned email
   const { invitado } = useLocalSearchParams();
-
   const [account, setAccount] = useState<Account | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
-
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [currentEmail, setCurrentEmail] = useState<string | null>(null);
 

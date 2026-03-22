@@ -71,7 +71,7 @@ export default function RecepcionScanner() {
 
     if (invitado) {
       router.replace({
-        pathname: "/recepcion/cuentaQR",
+        pathname: "/recepcion/cuentaqr",
         params: { invitado },
       });
     } else {
