@@ -44,6 +44,13 @@ export default function ScannerScreen() {
   }
 
   useEffect(() => {
+  // Scanner is ONLY for invitado
+  if (role !== "invitado") {
+    setRole("invitado");
+  }
+}, []);
+
+  useEffect(() => {
     if (!permission?.granted) {
       requestPermission();
     }
