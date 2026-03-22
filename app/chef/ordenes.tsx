@@ -355,11 +355,13 @@ const sortByClientName = (a: Order, b: Order) => {
                 <View style={styles.rowSplit}>
                   <View style={styles.leftSide}>
                     <Text style={styles.headerText}>
-                      Orden #{order.orderNumber} — 
-                      Cliente: {order.username?.trim() || order.nombreInvitado || "Sin nombre"
-                    } • Estil: {order.nombreEstilista ?? "No estilista"} —{" "}
-                      {getElapsed(order.createdAt)}
-                    </Text>
+  Orden #{order.orderNumber} — 
+  Cliente: {order.role === "invitado"
+    ? order.nombreInvitado || "Sin nombre"
+    : order.username?.trim() || "Sin nombre"
+  }
+  • Estil: {order.nombreEstilista ?? "No estilista"} — {getElapsed(order.createdAt)}
+</Text>
 
                     {order.items?.map((item, i) => (
   <View key={i} style={styles.itemRow}>
