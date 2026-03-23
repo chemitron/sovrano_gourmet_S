@@ -29,6 +29,8 @@ export default function AdminCuentasScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [selectedOrderList, setSelectedOrderList] = useState<Order[]>([]);
+  const [pendingOrdersModal, setPendingOrdersModal] = useState(false);
 
   const [filter, setFilter] = useState<
   "sinPagarEmpleado"
@@ -193,43 +195,21 @@ export default function AdminCuentasScreen() {
                 <View style={styles.topRow}>
                   <Text style={styles.topItem}>{acc.username}</Text>
                   <Text style={styles.topItem}>
-                    Saldo: ${acc.balance.toFixed(2)}
+                    Saldo: $
+{acc.balance.toLocaleString("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})}
                   </Text>
                 </View>
 
-                <Text style={styles.sectionTitle}>Órdenes pendientes</Text>
-
-                {accountOrders.length === 0 && (
-                  <Text style={styles.emptyText}>
-                    No hay órdenes pendientes
-                  </Text>
-                )}
-
-                {accountOrders.map((order) => (
-                  <View key={order.id} style={{ marginBottom: 12 }}>
-                    <View style={styles.rowTop}>
-                      <Text style={styles.orderText}>
-                        Orden #{order.orderNumber} — ${order.total}
-                      </Text>
-                    </View>
-
-                    <View style={styles.rowBottom}>
-                      <Text style={styles.orderText}>
-                        Cargado a cuenta:{" "}
-                        {order.chargedToAccount ? "Sí" : "No"}
-                      </Text>
-
-                      <TouchableOpacity
-                        onPress={() => {
-                          setSelectedOrder(order);
-                          setModalVisible(true);
-                        }}
-                      >
-                        <Text style={styles.detailsLink}>Ver detalles</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ))}
+                <Button_style2
+  title="Ver órdenes pendientes"
+  onPress={() => {
+    setSelectedOrderList(accountOrders);
+    setPendingOrdersModal(true);
+  }}
+/>
 
                 {/* ⭐ Disable button if contador is viewing their own account */}
                 {acc.balance > 0 && (
@@ -334,6 +314,33 @@ export default function AdminCuentasScreen() {
           </View>
         </View>
       </Modal>
+
+      <Modal visible={pendingOrdersModal} transparent animationType="fade">
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalBox}>
+      <Text style={styles.modalTitle}>Órdenes pendientes</Text>
+
+      {selectedOrderList.length === 0 && (
+        <Text style={styles.emptyText}>No hay órdenes pendientes</Text>
+      )}
+
+      {selectedOrderList.map((order) => (
+        <View key={order.id} style={{ marginBottom: 12 }}>
+          <Text style={styles.orderText}>
+            Orden #{order.orderNumber} — ${order.total}
+          </Text>
+        </View>
+      ))}
+
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={() => setPendingOrdersModal(false)}
+      >
+        <Text style={styles.closeButtonText}>Cerrar</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
     </>
   );
 }

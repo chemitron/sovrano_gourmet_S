@@ -154,9 +154,25 @@ const usuarioAccounts = filteredAccounts.filter((acc) => {
 const renderAccountCard = (acc: Account, accountOrders: Order[]) => (
   <View key={acc.email} style={styles.accountCard}>
     <View style={styles.topRow}>
-      <Text style={styles.topItem}>{acc.username}</Text>
-      <Text style={styles.topItem}>Saldo: ${acc.balance.toFixed(2)}</Text>
-    </View>
+  <View style={{ flex: 1 }}>
+    <Text style={styles.topItem}>
+      Cliente: {getAccountDisplayName(acc, accountOrders)}
+    </Text>
+
+    <Text style={styles.topItem}>
+      Estilista: {getEstilistaName(accountOrders)}
+    </Text>
+  </View>
+
+  <Text style={[styles.topItem, { textAlign: "right" }]}>
+    Saldo: $
+    {acc.balance.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}
+  </Text>
+</View>
+
 
     <Text style={styles.sectionTitle}>Órdenes pendientes</Text>
 
@@ -205,6 +221,20 @@ const renderAccountCard = (acc: Account, accountOrders: Order[]) => (
     )}
   </View>
 );
+
+const getAccountDisplayName = (acc: Account, accountOrders: Order[]) => {
+  const role = accountOrders[0]?.role?.toLowerCase() ?? null;
+
+  if (role === "invitado") {
+    return accountOrders[0]?.nombreInvitado || "Invitado";
+  }
+
+  return acc.username || "Usuario";
+};
+
+const getEstilistaName = (accountOrders: Order[]) => {
+  return accountOrders[0]?.nombreEstilista || "No estilista";
+};
 
   return (
     <>
@@ -382,10 +412,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  marginBottom: 10,
+},
+
   topItem: {
     fontSize: 16,
     fontWeight: "600",

@@ -156,6 +156,20 @@ export default function AdminCuentasScreen() {
     return true;
   });
 
+  const getAccountDisplayName = (acc: Account, accountOrders: Order[]) => {
+  const role = accountOrders[0]?.role?.toLowerCase() ?? null;
+
+  if (role === "invitado") {
+    return accountOrders[0]?.nombreInvitado || "Invitado";
+  }
+
+  return acc.username || "Usuario";
+};
+
+const getEstilistaName = (accountOrders: Order[]) => {
+  return accountOrders[0]?.nombreEstilista || "No estilista";
+};
+
   return (
     <>
       <Stack.Screen
@@ -230,11 +244,25 @@ export default function AdminCuentasScreen() {
             return (
               <View key={acc.email} style={styles.accountCard}>
                 <View style={styles.topRow}>
-                  <Text style={styles.topItem}>{acc.username}</Text>
-                  <Text style={styles.topItem}>
-                    Saldo: ${acc.balance.toFixed(2)}
-                  </Text>
-                </View>
+  <View>
+    <Text style={styles.topItem}>
+      Cliente: {getAccountDisplayName(acc, accountOrders)}
+    </Text>
+
+    <Text style={styles.topItem}>
+      Estilista: {getEstilistaName(accountOrders)}
+    </Text>
+  </View>
+
+  <Text style={styles.topItem}>
+    Saldo: $
+{acc.balance.toLocaleString("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})}
+
+  </Text>
+</View>
 
                 <Text style={styles.sectionTitle}>Órdenes pendientes</Text>
 

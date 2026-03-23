@@ -206,7 +206,11 @@ export default function CuentaPersonalScreen() {
         <ScrollView contentContainerStyle={styles.container}>
           <View style={styles.balanceBox}>
             <Text style={styles.balanceLabel}>Saldo actual</Text>
-            <Text style={styles.balanceValue}>${balance.toFixed(2)}</Text>
+            <Text style={styles.balanceValue}>
+              ${balance.toLocaleString("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})}</Text>
           </View>
           <Button_style2
             title="Cargar a cuenta"
@@ -227,7 +231,10 @@ export default function CuentaPersonalScreen() {
   </View>
 
   <View style={styles.cell}>
-    <Text style={styles.orderAmount}>${order.total?.toFixed(2)}</Text>
+    <Text style={styles.orderAmount}>${order.total?.toLocaleString("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})}</Text>
   </View>
 
   <View style={styles.cell}>
