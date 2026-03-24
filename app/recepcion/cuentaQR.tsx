@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import {
   collection,
   doc,
@@ -114,6 +114,7 @@ export default function CuentaQRScreen() {
         status: "pagado",
       });
     }
+    router.replace("/recepcion");
   };
 
   return (

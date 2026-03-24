@@ -243,24 +243,21 @@ const getEstilistaName = (accountOrders: Order[]) => {
 
             return (
               <View key={acc.email} style={styles.accountCard}>
-                <View style={styles.topRow}>
-  <View>
-    <Text style={styles.topItem}>
-      Cliente: {getAccountDisplayName(acc, accountOrders)}
-    </Text>
+                <View style={styles.headerBlock}>
+  <Text style={styles.topItem}>
+    Cliente: {getAccountDisplayName(acc, accountOrders)}
+  </Text>
 
-    <Text style={styles.topItem}>
-      Estilista: {getEstilistaName(accountOrders)}
-    </Text>
-  </View>
+  <Text style={styles.topItem}>
+    Estilista: {getEstilistaName(accountOrders)}
+  </Text>
 
   <Text style={styles.topItem}>
     Saldo: $
-{acc.balance.toLocaleString("en-US", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})}
-
+    {acc.balance.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}
   </Text>
 </View>
 
@@ -556,4 +553,7 @@ const styles = StyleSheet.create({
   filterButtonTextActive: {
     color: "white",
   },
+  headerBlock: {
+  marginBottom: 10,
+},
 });

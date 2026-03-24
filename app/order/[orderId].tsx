@@ -299,7 +299,10 @@ export default function OrderScreen() {
           )}
         />
 
-        <Text style={styles.total}>Total: ${total.toFixed(2)}</Text>
+        <Text style={styles.total}>Total: ${total?.toLocaleString("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})}</Text>
       </View>
     </>
   );

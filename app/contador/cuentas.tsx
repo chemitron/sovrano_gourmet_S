@@ -153,6 +153,15 @@ export default function AdminCuentasScreen() {
     return true;
   });
 
+  const getAccountRole = (accountOrders: Order[]) => {
+  const role = accountOrders[0]?.role?.toLowerCase() ?? null;
+
+  if (!role) return "Sin rol";
+
+  // Capitalize first letter
+  return role.charAt(0).toUpperCase() + role.slice(1);
+};
+
   return (
     <>
       <Stack.Screen
@@ -193,15 +202,22 @@ export default function AdminCuentasScreen() {
             return (
               <View key={acc.email} style={styles.accountCard}>
                 <View style={styles.topRow}>
-                  <Text style={styles.topItem}>{acc.username}</Text>
-                  <Text style={styles.topItem}>
-                    Saldo: $
-{acc.balance.toLocaleString("en-US", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})}
-                  </Text>
-                </View>
+  <View>
+    <Text style={styles.topItem}>{acc.username}</Text>
+
+    <Text style={styles.roleItem}>
+      Posicion: {getAccountRole(accountOrders)}
+    </Text>
+  </View>
+
+  <Text style={styles.topItem}>
+    Saldo: $
+    {acc.balance.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}
+  </Text>
+</View>
 
                 <Button_style2
   title="Ver órdenes pendientes"
@@ -361,16 +377,8 @@ const styles = StyleSheet.create({
     color: "#777",
     fontStyle: "italic",
   },
-  sectionTitle: {
-    marginTop: 10,
-    fontWeight: "600",
-  },
   orderText: {
     fontSize: 15,
-  },
-  detailsLink: {
-    color: "#3A2F2F",
-    fontWeight: "600",
   },
   topRow: {
     flexDirection: "row",
@@ -381,13 +389,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#3A2F2F",
-  },
-  rowTop: {
-    marginBottom: 2,
-  },
-  rowBottom: {
-    flexDirection: "row",
-    justifyContent: "space-between",
   },
   modalOverlay: {
     flex: 1,
@@ -496,4 +497,10 @@ const styles = StyleSheet.create({
   filterButtonTextActive: {
     color: "white",
   },
+  roleItem: {
+  fontSize: 14,
+  fontWeight: "500",
+  color: "#5a4f4f",
+  marginTop: 2,
+},
 });
