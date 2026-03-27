@@ -20,6 +20,9 @@ import Logo from "../../components/Logo";
 import { auth, db } from "../../services/firestore/firebase";
 
 // ⭐ Import invitado context fields
+import { deleteUser } from "firebase/auth";
+import { deleteDoc } from "firebase/firestore";
+import { Alert } from "react-native";
 import {
   useInvitado,
   useNombreEstilista,
@@ -103,6 +106,58 @@ export default function UsuarioIndex() {
       router.replace("/login");
     } catch (error) {}
   };
+
+  // -----------------------------------------------------
+// 🗑️ Delete Account (Firebase Auth + Firestore)
+// -----------------------------------------------------
+const handleDeleteAccount = async () => {
+  try {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    Alert.alert(
+      "Eliminar cuenta",
+      "¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteDoc(doc(db, "users", user.uid));
+              await deleteUser(user);
+
+              resetContext();
+              router.dismissAll();
+              router.replace("/login");
+            } catch (error) {
+              if (error instanceof Error) {
+                console.log("Error deleting account:", error.message);
+              }
+
+              // Firebase-specific error narrowing
+              if (typeof error === "object" && error !== null && "code" in error) {
+                const firebaseError = error as { code: string };
+
+                if (firebaseError.code === "auth/requires-recent-login") {
+                  Alert.alert(
+                    "Reautenticación requerida",
+                    "Por seguridad, vuelve a iniciar sesión para eliminar tu cuenta."
+                  );
+                }
+              }
+            }
+          },
+        },
+      ]
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      console.log("Delete account error:", error.message);
+    }
+  }
+};
 
   // -----------------------------------------------------
   // 🟦 Handle stylist submission (fixed context timing)
@@ -220,7 +275,17 @@ export default function UsuarioIndex() {
             />
           </View>
 
+          <View style={{ paddingBottom: 10 }}>
           <Button_style2 title="Cerrar sesión" onPress={handleLogout} />
+          </View>
+
+          <View style={{ paddingBottom: 10 }}>
+  <Button_style2
+    title="Eliminar cuenta"
+    onPress={handleDeleteAccount}
+  />
+</View>
+
         </View>
       </GradientBackground>
     </>
