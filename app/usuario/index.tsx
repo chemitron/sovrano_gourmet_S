@@ -1,9 +1,20 @@
 import Constants from "expo-constants";
 import { router, Stack, useLocalSearchParams } from "expo-router";
-import { signOut } from "firebase/auth";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import {
+  deleteUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  signOut,
+} from "firebase/auth";
+import {
+  deleteDoc,
+  doc,
+  getDoc,
+  onSnapshot,
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -20,9 +31,6 @@ import Logo from "../../components/Logo";
 import { auth, db } from "../../services/firestore/firebase";
 
 // ⭐ Import invitado context fields
-import { deleteUser } from "firebase/auth";
-import { deleteDoc } from "firebase/firestore";
-import { Alert } from "react-native";
 import {
   useInvitado,
   useNombreEstilista,
@@ -40,6 +48,7 @@ export default function UsuarioIndex() {
   const [uid, setUid] = useState<string | null>(null);
   const [isCocinaOpen, setIsCocinaOpen] = useState(true);
   const [closedMessage, setClosedMessage] = useState("");
+
   // ⭐ Context setters
   const { setInvitadoEmail } = useInvitado();
   const { setNombreInvitado } = useNombreInvitado();
@@ -47,11 +56,15 @@ export default function UsuarioIndex() {
   const params = useLocalSearchParams<{ from?: string }>();
   const isExpoGo = Constants.appOwnership === "expo";
   const resetContext = useResetContext();
+
+  // Modals
   const [showEstilistaModal, setShowEstilistaModal] = useState(false);
   const [nombreEstilistaInput, setNombreEstilistaInput] = useState("");
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
   const [showDeletedModal, setShowDeletedModal] = useState(false);
 
-    // -----------------------------------------------------
+  // -----------------------------------------------------
   // 👤 3. Load user role
   // -----------------------------------------------------
   useEffect(() => {
@@ -107,53 +120,51 @@ export default function UsuarioIndex() {
   };
 
   // -----------------------------------------------------
-// 🗑️ Delete Account (Firebase Auth + Firestore)
-// -----------------------------------------------------
-const handleDeleteAccount = async () => {
+  // 🗑️ Delete Account (Firebase Auth + Firestore + cuentas_personales)
+  // -----------------------------------------------------
+  const handleDeleteAccount = async (password: string) => {
   try {
     const user = auth.currentUser;
-    if (!user) return;
+    if (!user || !user.email) return;
 
-    Alert.alert(
-      "Eliminar cuenta",
-      "¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-  try {
+    // Close password modal
+    setShowPasswordModal(false);
+
+    // 1. Reauthenticate
+    const credential = EmailAuthProvider.credential(user.email, password);
+    await reauthenticateWithCredential(user, credential);
+
+    // 2. Delete Firestore user document
     await deleteDoc(doc(db, "users", user.uid));
+
+    // 3. Delete cuenta_personal document
+    await deleteDoc(doc(db, "cuentas_personales", user.email));
+
+    // 4. Delete Firebase Auth user
     await deleteUser(user);
 
-    // Instead of redirecting immediately → show confirmation modal
+    // 5. Show confirmation modal
     setShowDeletedModal(true);
+    setDeletePassword("");
 
-  } catch (error) {
-    if (error instanceof Error) {
-      console.log("Error deleting account:", error.message);
+  } catch (error: any) {
+    console.log("🔥 DELETE ERROR:", error); // <-- IMPORTANT
+
+    if (error.code === "auth/wrong-password") {
+      Alert.alert("Error", "La contraseña es incorrecta.");
+      return;
     }
 
-    if (typeof error === "object" && error !== null && "code" in error) {
-      const firebaseError = error as { code: string };
+    if (error.code === "auth/requires-recent-login") {
+      Alert.alert(
+        "Reautenticación requerida",
+        "Por seguridad, vuelve a iniciar sesión para eliminar tu cuenta."
+      );
+      return;
+    }
 
-      if (firebaseError.code === "auth/requires-recent-login") {
-        Alert.alert(
-          "Reautenticación requerida",
-          "Por seguridad, vuelve a iniciar sesión para eliminar tu cuenta."
-        );
-      }
-    }
-  }
-},
-        },
-      ]
-    );
-  } catch (error) {
-    if (error instanceof Error) {
-      console.log("Delete account error:", error.message);
-    }
+    // NEW: Show real Firebase error
+    Alert.alert("Error", `No se pudo eliminar la cuenta.\n\n${error.code}`);
   }
 };
 
@@ -225,29 +236,62 @@ const handleDeleteAccount = async () => {
       </Modal>
 
       {/* -----------------------------------------------------
-    🟩 Account Deleted Confirmation Modal
------------------------------------------------------ */}
-<Modal visible={showDeletedModal} transparent animationType="fade">
-  <View style={styles.modalOverlay}>
-    <View style={styles.modalBox}>
-      <Text style={styles.modalTitle}>Cuenta eliminada</Text>
+          🔐 Password Confirmation Modal
+      ----------------------------------------------------- */}
+      <Modal visible={showPasswordModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Confirmar contraseña</Text>
 
-      <Text style={{ textAlign: "center", fontSize: 16 }}>
-        Tu cuenta ha sido eliminada exitosamente.
-      </Text>
+            <TextInput
+              style={styles.modalInput}
+              secureTextEntry
+              placeholder="Ingresa tu contraseña"
+              value={deletePassword}
+              onChangeText={setDeletePassword}
+            />
 
-      <Button_style2
-        title="Aceptar"
-        onPress={() => {
-          setShowDeletedModal(false);
-          resetContext();
-          router.dismissAll();
-          router.replace("/login");
-        }}
-      />
-    </View>
-  </View>
-</Modal>
+            <Button_style2
+              title="Eliminar cuenta"
+              onPress={() => handleDeleteAccount(deletePassword)}
+              disabled={!deletePassword.trim()}
+            />
+
+            <Button_style2
+              title="Cancelar"
+              onPress={() => {
+                setShowPasswordModal(false);
+                setDeletePassword("");
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* -----------------------------------------------------
+          🟩 Account Deleted Confirmation Modal
+      ----------------------------------------------------- */}
+      <Modal visible={showDeletedModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Cuenta eliminada</Text>
+
+            <Text style={{ textAlign: "center", fontSize: 16 }}>
+              Tu cuenta ha sido eliminada exitosamente.
+            </Text>
+
+            <Button_style2
+              title="Aceptar"
+              onPress={() => {
+                setShowDeletedModal(false);
+                resetContext();
+                router.dismissAll();
+                router.replace("/login");
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
 
       {/* -----------------------------------------------------
           MAIN UI
@@ -299,16 +343,15 @@ const handleDeleteAccount = async () => {
           </View>
 
           <View style={{ paddingBottom: 10 }}>
-          <Button_style2 title="Cerrar sesión" onPress={handleLogout} />
+            <Button_style2 title="Cerrar sesión" onPress={handleLogout} />
           </View>
 
           <View style={{ paddingBottom: 10 }}>
-  <Button_style2
-    title="Eliminar cuenta"
-    onPress={handleDeleteAccount}
-  />
-</View>
-
+            <Button_style2
+              title="Eliminar cuenta"
+              onPress={() => setShowPasswordModal(true)}
+            />
+          </View>
         </View>
       </GradientBackground>
     </>
@@ -330,7 +373,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 16,
   },
-
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
