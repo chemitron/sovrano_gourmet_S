@@ -47,10 +47,9 @@ export default function UsuarioIndex() {
   const params = useLocalSearchParams<{ from?: string }>();
   const isExpoGo = Constants.appOwnership === "expo";
   const resetContext = useResetContext();
-
-  // Modal state
   const [showEstilistaModal, setShowEstilistaModal] = useState(false);
   const [nombreEstilistaInput, setNombreEstilistaInput] = useState("");
+  const [showDeletedModal, setShowDeletedModal] = useState(false);
 
     // -----------------------------------------------------
   // 👤 3. Load user role
@@ -124,31 +123,30 @@ const handleDeleteAccount = async () => {
           text: "Eliminar",
           style: "destructive",
           onPress: async () => {
-            try {
-              await deleteDoc(doc(db, "users", user.uid));
-              await deleteUser(user);
+  try {
+    await deleteDoc(doc(db, "users", user.uid));
+    await deleteUser(user);
 
-              resetContext();
-              router.dismissAll();
-              router.replace("/login");
-            } catch (error) {
-              if (error instanceof Error) {
-                console.log("Error deleting account:", error.message);
-              }
+    // Instead of redirecting immediately → show confirmation modal
+    setShowDeletedModal(true);
 
-              // Firebase-specific error narrowing
-              if (typeof error === "object" && error !== null && "code" in error) {
-                const firebaseError = error as { code: string };
+  } catch (error) {
+    if (error instanceof Error) {
+      console.log("Error deleting account:", error.message);
+    }
 
-                if (firebaseError.code === "auth/requires-recent-login") {
-                  Alert.alert(
-                    "Reautenticación requerida",
-                    "Por seguridad, vuelve a iniciar sesión para eliminar tu cuenta."
-                  );
-                }
-              }
-            }
-          },
+    if (typeof error === "object" && error !== null && "code" in error) {
+      const firebaseError = error as { code: string };
+
+      if (firebaseError.code === "auth/requires-recent-login") {
+        Alert.alert(
+          "Reautenticación requerida",
+          "Por seguridad, vuelve a iniciar sesión para eliminar tu cuenta."
+        );
+      }
+    }
+  }
+},
         },
       ]
     );
@@ -225,6 +223,31 @@ const handleDeleteAccount = async () => {
           </ScrollView>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* -----------------------------------------------------
+    🟩 Account Deleted Confirmation Modal
+----------------------------------------------------- */}
+<Modal visible={showDeletedModal} transparent animationType="fade">
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalBox}>
+      <Text style={styles.modalTitle}>Cuenta eliminada</Text>
+
+      <Text style={{ textAlign: "center", fontSize: 16 }}>
+        Tu cuenta ha sido eliminada exitosamente.
+      </Text>
+
+      <Button_style2
+        title="Aceptar"
+        onPress={() => {
+          setShowDeletedModal(false);
+          resetContext();
+          router.dismissAll();
+          router.replace("/login");
+        }}
+      />
+    </View>
+  </View>
+</Modal>
 
       {/* -----------------------------------------------------
           MAIN UI
