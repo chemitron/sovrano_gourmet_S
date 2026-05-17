@@ -49,6 +49,7 @@ export default function EditMenuItem() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [soloEmpleado, setSoloEmpleado] = useState(false);
+  const [menuSemanal, setMenuSemanal] = useState(false);
 
   // Load categories
   useEffect(() => {
@@ -86,6 +87,8 @@ export default function EditMenuItem() {
       setImageUri(data.imageUrl);
       setIsAvailable(data.isAvailable);
       setLoading(false);
+      setSoloEmpleado(data.soloEmpleado || false);
+      setMenuSemanal(data.menu_semanal || false);
     };
 
     loadItem();
@@ -136,6 +139,7 @@ export default function EditMenuItem() {
   imageUrl: finalImageUrl,
   isAvailable: isAvailable,
   soloEmpleado,
+  menu_semanal: menuSemanal,
 });
 
     setSaving(false);
@@ -205,6 +209,15 @@ export default function EditMenuItem() {
     <Switch
       value={soloEmpleado}
       onValueChange={setSoloEmpleado}
+    />
+  </View>
+
+  {/* MENÚ SEMANAL */}
+  <View style={styles.column}>
+    <Text style={styles.label}>Menú semanal</Text>
+    <Switch
+      value={menuSemanal}
+      onValueChange={setMenuSemanal}
     />
   </View>
 

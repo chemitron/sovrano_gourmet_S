@@ -27,14 +27,15 @@ export type MenuItem = {
   id: string;
   ItemName: string;
   categoryId: number;
-  description: string;
-  imageUrl: string;
+  description?: string;
+  imageUrl?: string;
   isAvailable: boolean;
   itemIndex: number;
   prepTime: number;
-  priceCustomer: number;
-  priceEmployee: number;
+  priceCustomer?: number;
+  priceEmployee?: number;
   soloEmpleado: boolean;
+  menu_semanal?: boolean;
 };
 
 export type MenuCategory = {
@@ -85,4 +86,14 @@ export type ItemCategory = {
   id: string;
   Categoryname: string;
   categoryIndex: number;
+};
+
+export type WeeklyMenu = {
+  monday: string[];
+  tuesday: string[];
+  wednesday: string[];
+  thursday: string[];
+  friday: string[];
+  saturday: string[];
+  sunday: string[];
 };

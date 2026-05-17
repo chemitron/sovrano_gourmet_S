@@ -103,8 +103,15 @@ useEffect(() => {
           )}
          <View style={{ paddingBottom: 5 }}>
           <Button_style2
-            title="Ver menú"
+            title="Ver menú general"
             onPress={() => router.push("/empleado/menu")}
+            disabled={!isCocinaOpen}
+          />
+</View> 
+<View style={{ paddingBottom: 5 }}>
+          <Button_style2
+            title="Ver menú semanal"
+            onPress={() => router.push("/empleado/menu_semanal")}
             disabled={!isCocinaOpen}
           />
 </View> 

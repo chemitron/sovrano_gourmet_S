@@ -1,0 +1,15 @@
+1. Is the app restricted to users who are part of a single company or organization? This may include users of the company's partners, employees, and contractors.
+No. The app can be used by any peron.
+2. Is the app designed for use by a limited or specific group of companies or organizations? 
+It is not limited
+- If yes, which companies or organizations use this app? 
+- If not, can any company or organization become a client and utilize this app?
+Yes. Any person can be a client and use the app.
+3. What features in the app, if any, are intended for use by the general public? The general public refers to a wide range of users who can discover, download, and use an app without invitation, pre-approved registration, or affiliation with a specific organization.
+General public can use the "invitado" option to open the app and create orders.
+4. How do users obtain an account?
+If the person decides to have order history they can register using the "Registration" flow.
+5. Is there any paid content in the app and if so who pays for it? For example, do users pay for opening an account or using certain features in the app?
+There is no paid content within the app. All orders are paid outside the app.
+
+clavesovrano

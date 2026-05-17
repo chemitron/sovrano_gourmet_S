@@ -48,6 +48,7 @@ export default function AddMenuItem() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [soloEmpleado, setSoloEmpleado] = useState(false);
+  const [menuSemanal, setMenuSemanal] = useState(false);
 
   // Load categories
   useEffect(() => {
@@ -131,6 +132,7 @@ export default function AddMenuItem() {
       itemIndex: nextIndex,
       categoryId: Number(selectedCategory),
       soloEmpleado,
+      menu_semanal: menuSemanal,
     });
 
     // ⭐ 4. Increment counter
@@ -212,6 +214,11 @@ export default function AddMenuItem() {
                     <Text style={styles.label}>Solo empleado</Text>
                     <Switch value={soloEmpleado} onValueChange={setSoloEmpleado} />
                   </View>
+
+                  <View style={styles.column}>
+    <Text style={styles.label}>Menú semanal</Text>
+    <Switch value={menuSemanal} onValueChange={setMenuSemanal} />
+  </View>
 
                   <View style={[styles.column, { alignItems: "flex-end" }]}>
                     <Text style={styles.label}>Tiempo de preparación</Text>

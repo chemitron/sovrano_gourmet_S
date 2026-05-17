@@ -147,13 +147,17 @@ export default function MenuScreen() {
   // -----------------------------------------------------
   // PRICE BY ROLE
   // -----------------------------------------------------
-  function getPriceForRole(item: MenuItem) {
+  function getPriceForRole(item: MenuItem): number {
   const employeeRoles = ["empleado", "admin", "chef", "recepcion", "contador"];
-  const safeRole = role ?? ""; // role comes from context
+  const safeRole = role ?? "";
 
-  return employeeRoles.includes(safeRole)
-    ? item.priceEmployee
-    : item.priceCustomer;
+  const base =
+    employeeRoles.includes(safeRole)
+      ? item.priceEmployee ?? item.priceCustomer
+      : item.priceCustomer ?? item.priceEmployee;
+
+  // Fallback to 0 if both are undefined
+  return base ?? 0;
 }
 
   // -----------------------------------------------------
