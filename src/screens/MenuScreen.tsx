@@ -3,6 +3,7 @@ import { getAuth } from "firebase/auth";
 import {
   collection,
   doc,
+  getDoc,
   getFirestore,
   onSnapshot,
   orderBy,
@@ -17,6 +18,7 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
+  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -48,6 +50,8 @@ export default function MenuScreen() {
   const [cartCount, setCartCount] = useState(0);
   const [itemsInOrder, setItemsInOrder] = useState<any[]>([]);
   const [orderNumber, setOrderNumber] = useState<number | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedDescription, setSelectedDescription] = useState<string>("");
 
   // -----------------------------------------------------
   // LOAD EXISTING PENDING ORDER
@@ -158,6 +162,20 @@ export default function MenuScreen() {
 
   // Fallback to 0 if both are undefined
   return base ?? 0;
+}
+
+async function showItemDetails(itemId: string) {
+  try {
+    const ref = doc(db, "menuItems", itemId);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const data = snap.data();
+      setSelectedDescription(data.description || "Sin descripción disponible.");
+      setModalVisible(true);
+    }
+  } catch (err) {
+    console.log("🔥 showItemDetails error:", err);
+  }
 }
 
   // -----------------------------------------------------
@@ -418,44 +436,135 @@ const roleToStore = role ?? "usuario";
                 </View>
 
                 {itemsInCategory.map((item) => (
-                  <View key={item.id} style={styles.itemCard}>
-                    <TouchableOpacity onPress={() => addItemToOrder(item)}>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                          marginBottom: 10,
-                        }}
-                      >
-                        {item.imageUrl ? (
-                          <Image
-                            source={{ uri: item.imageUrl }}
-                            style={styles.itemImage}
-                          />
-                        ) : (
-                          <View style={styles.noImageBox}>
-                            <Text style={{ color: "#666", fontSize: 12 }}>
-                              Sin imagen
-                            </Text>
-                          </View>
-                        )}
+  <View key={item.id} style={styles.itemCard}>
+    <View style={{ flexDirection: "row", alignItems: "stretch" }}>
+      {/* LEFT COLUMN – existing content, tap to add */}
+      <TouchableOpacity
+        onPress={() => addItemToOrder(item)}
+        style={{ flex: 3 }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 10,
+          }}
+        >
+          {item.imageUrl ? (
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={styles.itemImage}
+            />
+          ) : (
+            <View style={styles.noImageBox}>
+              <Text style={{ color: "#666", fontSize: 12 }}>
+                Sin imagen
+              </Text>
+            </View>
+          )}
 
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.itemName}>{item.ItemName}</Text>
-                          <Text style={styles.itemDetails}>
-                            ${getPriceForRole(item).toFixed(2)} •{" "}
-                            {item.prepTime} min
-                          </Text>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                ))}
+          <View style={{ flex: 1 }}>
+            <Text style={styles.itemName}>{item.ItemName}</Text>
+            <Text style={styles.itemDetails}>
+              ${getPriceForRole(item).toFixed(2)} • {item.prepTime} min
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+
+      {/* RIGHT COLUMN – Detalles button */}
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          marginLeft: 8,
+        }}
+      >
+        <TouchableOpacity
+          onPress={() => showItemDetails(item.id)}
+          style={{
+            paddingVertical: 8,
+            paddingHorizontal: 10,
+            borderRadius: 8,
+            backgroundColor: "#a68f5b",
+          }}
+        >
+          <Text
+            style={{
+              color: "white",
+              fontWeight: "600",
+              fontSize: 12,
+              textAlign: "center",
+            }}
+          >
+            Detalles
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+))}
               </View>
             );
           }}
         />
       </View>
+      <Modal
+  visible={modalVisible}
+  transparent
+  animationType="fade"
+  onRequestClose={() => setModalVisible(false)}
+>
+  <View
+    style={{
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 20,
+    }}
+  >
+    <View
+      style={{
+        backgroundColor: "white",
+        borderRadius: 12,
+        padding: 20,
+        maxWidth: 400,
+        width: "100%",
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 18,
+          fontWeight: "bold",
+          marginBottom: 10,
+          textAlign: "center",
+        }}
+      >
+        Detalles del plato
+      </Text>
+
+      <Text style={{ fontSize: 14, color: "#333", marginBottom: 20 }}>
+        {selectedDescription}
+      </Text>
+
+      <TouchableOpacity
+        onPress={() => setModalVisible(false)}
+        style={{
+          alignSelf: "center",
+          paddingVertical: 8,
+          paddingHorizontal: 20,
+          borderRadius: 8,
+          backgroundColor: "#a68f5b",
+        }}
+      >
+        <Text style={{ color: "white", fontWeight: "600" }}>Cerrar</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+
     </>
   );
 }
