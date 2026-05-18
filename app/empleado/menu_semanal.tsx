@@ -1,6 +1,6 @@
 import type { MenuItem, WeeklyMenu } from "@/src/types";
 import { Stack } from "expo-router";
-import { collection, doc, getDoc, getFirestore, onSnapshot, orderBy, query } from "firebase/firestore";
+import { collection, doc, getDoc, getFirestore, onSnapshot, orderBy, query, setDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 
@@ -43,16 +43,33 @@ export default function WeeklyMenuEmpleado() {
 
   // Load weekly menu
   useEffect(() => {
-    const loadWeekly = async () => {
-      const ref = doc(db, "weeklyMenu", "current");
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        setWeeklyMenu(snap.data() as WeeklyMenu);
-      }
-      setLoading(false);
-    };
-    loadWeekly();
-  }, []);
+  const loadWeekly = async () => {
+    const ref = doc(db, "weeklyMenu", "current");
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      // Auto-create empty structure
+      const empty: WeeklyMenu = {
+        monday: { desayuno: [], almuerzo: [], cena: [] },
+        tuesday: { desayuno: [], almuerzo: [], cena: [] },
+        wednesday: { desayuno: [], almuerzo: [], cena: [] },
+        thursday: { desayuno: [], almuerzo: [], cena: [] },
+        friday: { desayuno: [], almuerzo: [], cena: [] },
+        saturday: { desayuno: [], almuerzo: [], cena: [] },
+        sunday: { desayuno: [], almuerzo: [], cena: [] }
+      };
+
+      await setDoc(ref, empty);
+      setWeeklyMenu(empty);
+    } else {
+      setWeeklyMenu(snap.data() as WeeklyMenu);
+    }
+
+    setLoading(false);
+  };
+
+  loadWeekly();
+}, []);
 
   if (loading || !weeklyMenu) {
     return (
@@ -74,10 +91,15 @@ export default function WeeklyMenuEmpleado() {
             </Text>
 
             {meals.map((meal) => {
-              const ids =
-                weeklyMenu[day.key as keyof WeeklyMenu][
-                  meal.key as "desayuno" | "almuerzo" | "cena"
-                ];
+              const dayData =
+  weeklyMenu[day.key as keyof WeeklyMenu] || {
+    desayuno: [],
+    almuerzo: [],
+    cena: []
+  };
+
+const ids =
+  dayData[meal.key as "desayuno" | "almuerzo" | "cena"] || [];
 
               const itemsForMeal = menuItems.filter((item) =>
                 ids.includes(item.id)

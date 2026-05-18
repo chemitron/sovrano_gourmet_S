@@ -1,12 +1,13 @@
 import type { MenuItem, WeeklyMenu } from "@/src/types";
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import { collection, doc, getDoc, getFirestore, onSnapshot, orderBy, query, setDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function WeeklyMenuScreen() {
   const db = getFirestore();
-
+  const insets = useSafeAreaInsets();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,7 +37,7 @@ export default function WeeklyMenuScreen() {
     { key: "cena", label: "Cena" },
   ];
 
-  // Load menu items
+  // Load menu items (ONLY soloEmpleado)
   useEffect(() => {
     const q = query(collection(db, "menuItems"), orderBy("itemIndex", "asc"));
     const unsub = onSnapshot(q, (snap) => {
@@ -45,7 +46,10 @@ export default function WeeklyMenuScreen() {
         return { ...data, id: d.id };
       });
 
-      setMenuItems(list);
+      // ⭐ FILTER: Only show items marked as soloEmpleado
+      const filtered = list.filter((item) => item.soloEmpleado === true);
+
+      setMenuItems(filtered);
       setLoading(false);
     });
 
@@ -91,6 +95,7 @@ export default function WeeklyMenuScreen() {
     });
 
     alert("Menú semanal guardado");
+    router.back();
   };
 
   if (loading) {
@@ -156,20 +161,37 @@ export default function WeeklyMenuScreen() {
           </View>
         ))}
 
-        <TouchableOpacity
-          onPress={saveWeeklyMenu}
+        <View
           style={{
-            backgroundColor: "black",
             padding: 16,
-            borderRadius: 10,
-            marginTop: 20,
+            borderTopWidth: 1,
+            borderColor: "#ddd",
+            backgroundColor: "white",
+            marginBottom: insets.bottom + 10,
           }}
         >
-          <Text style={{ color: "white", textAlign: "center", fontSize: 18 }}>
-            Guardar Menú Semanal
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={saveWeeklyMenu}
+            style={{
+              backgroundColor: "black",
+              padding: 16,
+              borderRadius: 10,
+            }}
+          >
+            <Text
+              style={{
+                color: "white",
+                textAlign: "center",
+                fontSize: 18,
+              }}
+            >
+              Guardar Menú Semanal
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
+
+
     </>
   );
 }
