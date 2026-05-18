@@ -140,6 +140,10 @@ export default function AdminIndex() {
               onPress={() => router.push("/administrador/cuentas")}
             />
             <Button_style2
+              title="Manejo menú semanal"
+              onPress={() => router.push("/administrador/manejo_menu_semanal")}
+            />
+            <Button_style2
               title="Reportes"
               onPress={() => router.push("/administrador/reports")}
             />

@@ -21,6 +21,12 @@ export default function WeeklyMenuEmpleado() {
     { key: "sunday", label: "Domingo" },
   ];
 
+  const meals = [
+    { key: "desayuno", label: "Desayuno" },
+    { key: "almuerzo", label: "Almuerzo" },
+    { key: "cena", label: "Cena" },
+  ];
+
   // Load menu items
   useEffect(() => {
     const q = query(collection(db, "menuItems"), orderBy("itemIndex", "asc"));
@@ -61,36 +67,52 @@ export default function WeeklyMenuEmpleado() {
       <Stack.Screen options={{ title: "Menú Semanal" }} />
 
       <ScrollView style={{ padding: 20 }}>
-        {days.map((day) => {
-          const ids = weeklyMenu[day.key as keyof WeeklyMenu];
-          const itemsForDay = menuItems.filter((item) => ids.includes(item.id));
+        {days.map((day) => (
+          <View key={day.key} style={{ marginBottom: 40 }}>
+            <Text style={{ fontSize: 26, fontWeight: "bold", marginBottom: 10 }}>
+              {day.label}
+            </Text>
 
-          return (
-            <View key={day.key} style={{ marginBottom: 30 }}>
-              <Text style={{ fontSize: 22, fontWeight: "bold", marginBottom: 10 }}>
-                {day.label}
-              </Text>
+            {meals.map((meal) => {
+              const ids =
+                weeklyMenu[day.key as keyof WeeklyMenu][
+                  meal.key as "desayuno" | "almuerzo" | "cena"
+                ];
 
-              {itemsForDay.length === 0 ? (
-                <Text style={{ color: "#666", marginBottom: 10 }}>No hay items asignados</Text>
-              ) : (
-                itemsForDay.map((item) => (
-                  <View
-                    key={item.id}
-                    style={{
-                      padding: 12,
-                      backgroundColor: "#eee",
-                      borderRadius: 8,
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Text style={{ fontSize: 18 }}>{item.ItemName}</Text>
-                  </View>
-                ))
-              )}
-            </View>
-          );
-        })}
+              const itemsForMeal = menuItems.filter((item) =>
+                ids.includes(item.id)
+              );
+
+              return (
+                <View key={meal.key} style={{ marginBottom: 20 }}>
+                  <Text style={{ fontSize: 20, fontWeight: "600", marginBottom: 6 }}>
+                    {meal.label}
+                  </Text>
+
+                  {itemsForMeal.length === 0 ? (
+                    <Text style={{ color: "#666", marginBottom: 10 }}>
+                      No hay items asignados
+                    </Text>
+                  ) : (
+                    itemsForMeal.map((item) => (
+                      <View
+                        key={item.id}
+                        style={{
+                          padding: 12,
+                          backgroundColor: "#eee",
+                          borderRadius: 8,
+                          marginBottom: 8,
+                        }}
+                      >
+                        <Text style={{ fontSize: 18 }}>{item.ItemName}</Text>
+                      </View>
+                    ))
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        ))}
       </ScrollView>
     </>
   );

@@ -109,6 +109,14 @@ useEffect(() => {
                         onPress={() => router.push("/chef/ordenes")}
                       />
 </View> 
+
+<View style={{ paddingBottom: 20 }}>
+  <Button_style2
+    title="Manejo menú semanal"
+    onPress={() => router.push("/chef/manejo_menu_semanal")}
+  />
+</View>
+
          <View style={{ paddingBottom: 20 }}>
           <Button_style2
                         title="Ingresar como empleado"

@@ -89,11 +89,39 @@ export type ItemCategory = {
 };
 
 export type WeeklyMenu = {
-  monday: string[];
-  tuesday: string[];
-  wednesday: string[];
-  thursday: string[];
-  friday: string[];
-  saturday: string[];
-  sunday: string[];
+  monday: {
+    desayuno: string[];
+    almuerzo: string[];
+    cena: string[];
+  };
+  tuesday: {
+    desayuno: string[];
+    almuerzo: string[];
+    cena: string[];
+  };
+  wednesday: {
+    desayuno: string[];
+    almuerzo: string[];
+    cena: string[];
+  };
+  thursday: {
+    desayuno: string[];
+    almuerzo: string[];
+    cena: string[];
+  };
+  friday: {
+    desayuno: string[];
+    almuerzo: string[];
+    cena: string[];
+  };
+  saturday: {
+    desayuno: string[];
+    almuerzo: string[];
+    cena: string[];
+  };
+  sunday: {
+    desayuno: string[];
+    almuerzo: string[];
+    cena: string[];
+  };
 };
