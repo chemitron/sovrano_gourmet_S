@@ -46,6 +46,11 @@ export default function ChefOrdenes() {
     return diff >= 15 * 60 * 1000;
   };
 
+  const getOrderTotal = (order: Order) => {
+  if (!order.items) return 0;
+  return order.items.reduce((sum, item) => sum + (item.price || 0) * (item.qty || 1), 0);
+};
+
   const playNewOrderSound = async () => {
     try {
       const { sound } = await Audio.Sound.createAsync(
@@ -201,6 +206,39 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
     });
   };
 
+  const cancelarConBalance = async (order: Order) => {
+  try {
+    const userEmail = order.userEmail;
+    if (!userEmail) return;
+
+    const total = getOrderTotal(order);
+
+    // 1. Load current balance from cuentas_personales
+    const cuentaRef = doc(db, "cuentas_personales", userEmail);
+    const cuentaSnap = await getDoc(cuentaRef);
+
+    const currentBalance = cuentaSnap.exists()
+      ? cuentaSnap.data().balance ?? 0
+      : 0;
+
+    // 2. Deduct the order total
+    await updateDoc(cuentaRef, {
+      balance: currentBalance - total,
+    });
+
+    // 3. Mark order as canceled
+    await updateDoc(doc(db, "orders", order.id), {
+      status: "cancelado",
+      served: true,
+      canceledAt: new Date(),
+    });
+
+  } catch (e) {
+    Alert.alert("Error", "No se pudo cancelar y ajustar el balance");
+  }
+};
+
+
   const markCancelada = async (orderId: string) => {
     await updateDoc(doc(db, "orders", orderId), {
       status: "cancelado",
@@ -312,12 +350,21 @@ const sortByClientName = (a: Order, b: Order) => {
                   </View>
 
                   <View style={styles.rightSide}>
-                    {order.status === "cancelado" && (
-                      <Button_style2
-                        title="Cancelada"
-                        onPress={() => markCancelada(order.id)}
-                      />
-                    )}
+                    {order.status !== "cancelado" && (
+  <Button_style2
+    title="Cancelar"
+    onPress={() =>
+      Alert.alert(
+        "Cancelar orden",
+        "¿Seguro que deseas cancelar esta orden?",
+        [
+          { text: "No", style: "cancel" },
+          { text: "Sí, cancelar", onPress: () => cancelarConBalance(order) }
+        ]
+      )
+    }
+  />
+)}
 
                     {!order.empezada && order.status !== "cancelado" && (
                       <Button_style2
@@ -385,12 +432,21 @@ const sortByClientName = (a: Order, b: Order) => {
                   </View>
 
                   <View style={styles.rightSide}>
-                    {order.status === "cancelado" && (
-                      <Button_style2
-                        title="Cancelada"
-                        onPress={() => markCancelada(order.id)}
-                      />
-                    )}
+                    {order.status !== "cancelado" && (
+  <Button_style2
+    title="Cancelar"
+    onPress={() =>
+      Alert.alert(
+        "Cancelar orden",
+        "¿Seguro que deseas cancelar esta orden?",
+        [
+          { text: "No", style: "cancel" },
+          { text: "Sí, cancelar", onPress: () => cancelarConBalance(order) }
+        ]
+      )
+    }
+  />
+)}
 
                     {!order.empezada && order.status !== "cancelado" && (
                       <Button_style2

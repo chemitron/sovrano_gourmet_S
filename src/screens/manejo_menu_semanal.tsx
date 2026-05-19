@@ -1,13 +1,30 @@
 import type { MenuItem, WeeklyMenu } from "@/src/types";
 import { Stack, router } from "expo-router";
-import { collection, doc, getDoc, getFirestore, onSnapshot, orderBy, query, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getFirestore,
+  onSnapshot,
+  orderBy,
+  query,
+  setDoc,
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function WeeklyMenuScreen() {
   const db = getFirestore();
   const insets = useSafeAreaInsets();
+
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +38,26 @@ export default function WeeklyMenuScreen() {
     sunday: { desayuno: [], almuerzo: [], cena: [] },
   });
 
-  const days = [
+  // ⭐ NEW: Prices for desayuno & almuerzo
+  const [valorDesayuno, setValorDesayuno] = useState<string>("15000");
+  const [valorAlmuerzo, setValorAlmuerzo] = useState<string>("50000");
+
+  // ⭐ Load settings from Firestore
+  useEffect(() => {
+    const loadSettings = async () => {
+      const ref = doc(db, "settings", "menu_semanal");
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const data = snap.data();
+        setValorDesayuno(String(data.valorDesayuno ?? "15000"));
+        setValorAlmuerzo(String(data.valorAlmuerzo ?? "50000"));
+      }
+    };
+    loadSettings();
+  }, []);
+
+  // ⭐ Día filter (Lunes → Domingo)
+  const dayOptions = [
     { key: "monday", label: "Lunes" },
     { key: "tuesday", label: "Martes" },
     { key: "wednesday", label: "Miércoles" },
@@ -29,13 +65,18 @@ export default function WeeklyMenuScreen() {
     { key: "friday", label: "Viernes" },
     { key: "saturday", label: "Sábado" },
     { key: "sunday", label: "Domingo" },
-  ];
+  ] as const;
 
-  const meals = [
+  // ⭐ Meal filter (only Desayuno + Almuerzo)
+  const mealOptions = [
     { key: "desayuno", label: "Desayuno" },
     { key: "almuerzo", label: "Almuerzo" },
-    { key: "cena", label: "Cena" },
-  ];
+  ] as const;
+
+  const [selectedDay, setSelectedDay] =
+    useState<(typeof dayOptions)[number]["key"]>("monday");
+  const [selectedMeal, setSelectedMeal] =
+    useState<(typeof mealOptions)[number]["key"]>("desayuno");
 
   // Load menu items (ONLY soloEmpleado)
   useEffect(() => {
@@ -46,9 +87,7 @@ export default function WeeklyMenuScreen() {
         return { ...data, id: d.id };
       });
 
-      // ⭐ FILTER: Only show items marked as soloEmpleado
       const filtered = list.filter((item) => item.soloEmpleado === true);
-
       setMenuItems(filtered);
       setLoading(false);
     });
@@ -70,7 +109,7 @@ export default function WeeklyMenuScreen() {
 
   const toggleItem = (
     day: keyof WeeklyMenu,
-    meal: "desayuno" | "almuerzo" | "cena",
+    meal: "desayuno" | "almuerzo",
     itemId: string
   ) => {
     setWeeklyMenu((prev) => {
@@ -89,78 +128,204 @@ export default function WeeklyMenuScreen() {
   };
 
   const saveWeeklyMenu = async () => {
+    // ⭐ Save weekly menu
     await setDoc(doc(db, "weeklyMenu", "current"), {
       ...weeklyMenu,
       updatedAt: new Date().toISOString(),
     });
 
-    alert("Menú semanal guardado");
+    // ⭐ Save settings
+    await setDoc(doc(db, "settings", "menu_semanal"), {
+      valorDesayuno: Number(valorDesayuno),
+      valorAlmuerzo: Number(valorAlmuerzo),
+      updatedAt: new Date().toISOString(),
+    });
+
+    alert("Menú semanal y valores guardados");
     router.back();
   };
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View
+        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+      >
         <ActivityIndicator size="large" />
       </View>
     );
   }
 
+  const currentDayLabel =
+    dayOptions.find((d) => d.key === selectedDay)?.label ?? "";
+  const currentMealLabel =
+    mealOptions.find((m) => m.key === selectedMeal)?.label ?? "";
+
+  const selectedIds =
+    weeklyMenu[selectedDay][selectedMeal as "desayuno" | "almuerzo"];
+
   return (
     <>
       <Stack.Screen options={{ title: "Menú Semanal" }} />
 
-      <ScrollView style={{ padding: 20 }}>
-        {days.map((day) => (
-          <View key={day.key} style={{ marginBottom: 40 }}>
-            <Text style={{ fontSize: 26, fontWeight: "bold", marginBottom: 10 }}>
-              {day.label}
-            </Text>
+      <View style={{ flex: 1 }}>
+        <ScrollView style={{ padding: 20 }}>
 
-            {meals.map((meal) => (
-              <View key={meal.key} style={{ marginBottom: 20 }}>
-                <Text style={{ fontSize: 20, fontWeight: "600", marginBottom: 6 }}>
-                  {meal.label}
-                </Text>
+<View
+  style={{
+    flexDirection: "row",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    marginBottom: 20,
+  }}
+>
+  {/* Desayuno */}
+  <View style={{ width: "48%", marginBottom: 12 }}>
+    <Text style={{ fontSize: 16, marginBottom: 4 }}>Valor desayuno</Text>
+    <TextInput
+      value={valorDesayuno}
+      onChangeText={setValorDesayuno}
+      keyboardType="numeric"
+      style={{
+        backgroundColor: "#eee",
+        padding: 10,
+        borderRadius: 8,
+      }}
+    />
+  </View>
 
-                {menuItems.map((item) => {
-                  const selected = weeklyMenu[day.key as keyof WeeklyMenu][
-                    meal.key as "desayuno" | "almuerzo" | "cena"
-                  ].includes(item.id);
+  {/* Almuerzo */}
+  <View style={{ width: "48%", marginBottom: 12 }}>
+    <Text style={{ fontSize: 16, marginBottom: 4 }}>Valor almuerzo</Text>
+    <TextInput
+      value={valorAlmuerzo}
+      onChangeText={setValorAlmuerzo}
+      keyboardType="numeric"
+      style={{
+        backgroundColor: "#eee",
+        padding: 10,
+        borderRadius: 8,
+      }}
+    />
+  </View>
+</View>
 
-                  return (
-                    <TouchableOpacity
-                      key={item.id}
-                      onPress={() =>
-                        toggleItem(
-                          day.key as keyof WeeklyMenu,
-                          meal.key as "desayuno" | "almuerzo" | "cena",
-                          item.id
-                        )
-                      }
-                      style={{
-                        padding: 12,
-                        borderRadius: 8,
-                        marginBottom: 8,
-                        backgroundColor: selected ? "#4CAF50" : "#eee",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 18,
-                          color: selected ? "white" : "black",
-                        }}
-                      >
-                        {item.ItemName}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ))}
+          {/* ⭐ Filtro Día */}
+          <Text style={{ fontSize: 16, fontWeight: "600", marginBottom: 6 }}>
+            Día
+          </Text>
+
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              gap: 8,
+              marginBottom: 16,
+            }}
+          >
+            {dayOptions.map((day) => {
+              const active = selectedDay === day.key;
+              return (
+                <TouchableOpacity
+                  key={day.key}
+                  onPress={() => setSelectedDay(day.key)}
+                  style={{
+                    paddingVertical: 8,
+                    paddingHorizontal: 12,
+                    borderRadius: 8,
+                    backgroundColor: active ? "#a68f5b" : "#eee",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: active ? "white" : "#333",
+                      fontWeight: "600",
+                    }}
+                  >
+                    {day.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
-        ))}
 
+          {/* ⭐ Filtro Comida */}
+          <Text style={{ fontSize: 16, fontWeight: "600", marginBottom: 6 }}>
+            Comida
+          </Text>
+
+          <View style={{ flexDirection: "row", gap: 8, marginBottom: 20 }}>
+            {mealOptions.map((meal) => {
+              const active = selectedMeal === meal.key;
+              return (
+                <TouchableOpacity
+                  key={meal.key}
+                  onPress={() => setSelectedMeal(meal.key)}
+                  style={{
+                    paddingVertical: 8,
+                    paddingHorizontal: 12,
+                    borderRadius: 8,
+                    backgroundColor: active ? "#a68f5b" : "#eee",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: active ? "white" : "#333",
+                      fontWeight: "600",
+                    }}
+                  >
+                    {meal.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* ⭐ Título del bloque actual */}
+          <Text
+            style={{
+              fontSize: 22,
+              fontWeight: "bold",
+              marginBottom: 10,
+            }}
+          >
+            {currentDayLabel} — {currentMealLabel}
+          </Text>
+
+          {/* ⭐ Lista de items */}
+          {menuItems.map((item) => {
+            const selected = selectedIds.includes(item.id);
+
+            return (
+              <TouchableOpacity
+                key={item.id}
+                onPress={() =>
+                  toggleItem(
+                    selectedDay,
+                    selectedMeal as "desayuno" | "almuerzo",
+                    item.id
+                  )
+                }
+                style={{
+                  padding: 12,
+                  borderRadius: 8,
+                  marginBottom: 8,
+                  backgroundColor: selected ? "#4CAF50" : "#eee",
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 18,
+                    color: selected ? "white" : "black",
+                  }}
+                >
+                  {item.ItemName}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {/* ⭐ Save button with SafeArea */}
         <View
           style={{
             padding: 16,
@@ -189,9 +354,7 @@ export default function WeeklyMenuScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
-
-
+      </View>
     </>
   );
 }
