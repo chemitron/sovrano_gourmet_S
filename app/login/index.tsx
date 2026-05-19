@@ -1,11 +1,12 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import { Stack, router } from "expo-router";
 import { sendPasswordResetEmail, signInAnonymously, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { deleteDoc, doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
-import { useEffect, useState, } from "react";
-import { ActivityIndicator, Alert, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Alert, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Button_style2 from "../../components/Button_style2";
 import GradientBackground from "../../components/GradientBackground";
 import Logo from "../../components/Logo";
@@ -30,7 +31,28 @@ export default function LoginIndex() {
   const appVersion = Constants.expoConfig?.version || "0.0.0";
   const iosBuildNumber = Constants.expoConfig?.ios?.buildNumber;
   const androidVersionCode = Constants.expoConfig?.android?.versionCode;
+  const [rememberEmail, setRememberEmail] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
 
+useEffect(() => {
+  const loadSavedEmail = async () => {
+    const saved = await AsyncStorage.getItem("savedEmail");
+    const savedToggle = await AsyncStorage.getItem("rememberEmail");
+
+    if (savedToggle === "true") {
+      setRememberEmail(true);
+      if (saved) {
+        setEmail(saved);
+
+        // Auto-focus password field
+        setTimeout(() => {
+          passwordRef.current?.focus();
+        }, 300);
+      }
+    }
+  };
+  loadSavedEmail();
+}, []);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
@@ -140,7 +162,13 @@ export default function LoginIndex() {
       { lastLogin: new Date().toISOString() }, // store ISO date string
       { merge: true }
     );
-
+    if (rememberEmail) {
+  await AsyncStorage.setItem("savedEmail", email);
+  await AsyncStorage.setItem("rememberEmail", "true");
+} else {
+  await AsyncStorage.removeItem("savedEmail");
+  await AsyncStorage.setItem("rememberEmail", "false");
+}
     setEmail('');
     setPassword('');
 
@@ -296,20 +324,46 @@ export default function LoginIndex() {
           />
             {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+  <TouchableOpacity
+    onPress={() => setRememberEmail(!rememberEmail)}
+    style={{
+      width: 22,
+      height: 22,
+      borderRadius: 4,
+      borderWidth: 2,
+      borderColor: "#444",
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: 8,
+      backgroundColor: rememberEmail ? "#d46b37ff" : "transparent",
+    }}
+  >
+    {rememberEmail && (
+      <Text style={{ color: "white", fontWeight: "bold" }}>✓</Text>
+    )}
+  </TouchableOpacity>
+
+  <Text style={{ fontSize: 16 }}>Recordar mi correo</Text>
+</View>
+
           <BodyText>Clave</BodyText>
           <TextInput
-            style={[
-            styles.inputText,{ backgroundColor: '#d8d2c4' },
-            { borderColor: passwordFocused ? '#d46b37ff' : '#999' }
-            ]}
-            secureTextEntry
-            placeholder="Entra tu clave"
-            placeholderTextColor="#888"
-            value={password}
-            onChangeText={setPassword}
-            onFocus={() => setPasswordFocused(true)}
-            onBlur={() => setPasswordFocused(false)}
-          />
+  ref={passwordRef}
+  style={[
+    styles.inputText,
+    { backgroundColor: '#d8d2c4' },
+    { borderColor: passwordFocused ? '#d46b37ff' : '#999' }
+  ]}
+  secureTextEntry
+  placeholder="Entra tu clave"
+  placeholderTextColor="#888"
+  value={password}
+  onChangeText={setPassword}
+  onFocus={() => setPasswordFocused(true)}
+  onBlur={() => setPasswordFocused(false)}
+/>
+
             {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
 <Button_style2
