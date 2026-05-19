@@ -117,6 +117,11 @@ useEffect(() => {
   />
 </View>
 
+<Button_style2
+              title="Lista de compras"
+              onPress={() => router.push("/administrador/reports/comprasNecesarias")}
+            />
+            
          <View style={{ paddingBottom: 20 }}>
           <Button_style2
                         title="Ingresar como empleado"

@@ -123,6 +123,7 @@ export default function CuentaPersonalScreen() {
 
     await updateDoc(orderRef, {
       status: "cancelado",
+      served: true, //This is needed for chef ordenes so cancelled orders do not show
       cancelledAt: new Date(),
       cancelledBy: auth.currentUser?.uid ?? null,
     });
