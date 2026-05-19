@@ -41,6 +41,7 @@ export default function WeeklyMenuScreen() {
   // ⭐ NEW: Prices for desayuno & almuerzo
   const [valorDesayuno, setValorDesayuno] = useState<string>("15000");
   const [valorAlmuerzo, setValorAlmuerzo] = useState<string>("50000");
+  const [searchText, setSearchText] = useState("");
 
   // ⭐ Load settings from Firestore
   useEffect(() => {
@@ -87,7 +88,7 @@ export default function WeeklyMenuScreen() {
         return { ...data, id: d.id };
       });
 
-      const filtered = list.filter((item) => item.soloEmpleado === true);
+      const filtered = list.filter((item) => item.menu_semanal === true);
       setMenuItems(filtered);
       setLoading(false);
     });
@@ -175,7 +176,6 @@ export default function WeeklyMenuScreen() {
     flexDirection: "row",
     justifyContent: "space-between",
     flexWrap: "wrap",
-    marginBottom: 20,
   }}
 >
   {/* Desayuno */}
@@ -210,10 +210,6 @@ export default function WeeklyMenuScreen() {
 </View>
 
           {/* ⭐ Filtro Día */}
-          <Text style={{ fontSize: 16, fontWeight: "600", marginBottom: 6 }}>
-            Día
-          </Text>
-
           <View
             style={{
               flexDirection: "row",
@@ -249,50 +245,65 @@ export default function WeeklyMenuScreen() {
           </View>
 
           {/* ⭐ Filtro Comida */}
-          <Text style={{ fontSize: 16, fontWeight: "600", marginBottom: 6 }}>
-            Comida
-          </Text>
 
-          <View style={{ flexDirection: "row", gap: 8, marginBottom: 20 }}>
-            {mealOptions.map((meal) => {
-              const active = selectedMeal === meal.key;
-              return (
-                <TouchableOpacity
-                  key={meal.key}
-                  onPress={() => setSelectedMeal(meal.key)}
-                  style={{
-                    paddingVertical: 8,
-                    paddingHorizontal: 12,
-                    borderRadius: 8,
-                    backgroundColor: active ? "#a68f5b" : "#eee",
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: active ? "white" : "#333",
-                      fontWeight: "600",
-                    }}
-                  >
-                    {meal.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+<View
+  style={{
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  }}
+>
+  {mealOptions.map((meal) => {
+    const active = selectedMeal === meal.key;
+    return (
+      <TouchableOpacity
+        key={meal.key}
+        onPress={() => setSelectedMeal(meal.key)}
+        style={{
+          flex: 1,
+          marginRight: meal.key === "desayuno" ? 8 : 0, // spacing between buttons
+          marginLeft: meal.key === "almuerzo" ? 8 : 0,
+          paddingVertical: 8,
+          paddingHorizontal: 12,
+          borderRadius: 8,
+          backgroundColor: active ? "#a68f5b" : "#eee",
+          alignItems: "center",
+        }}
+      >
+        <Text
+          style={{
+            color: active ? "white" : "#333",
+            fontWeight: "600",
+          }}
+        >
+          {meal.label}
+        </Text>
+      </TouchableOpacity>
+    );
+  })}
+</View>
 
-          {/* ⭐ Título del bloque actual */}
-          <Text
-            style={{
-              fontSize: 22,
-              fontWeight: "bold",
-              marginBottom: 10,
-            }}
-          >
-            {currentDayLabel} — {currentMealLabel}
-          </Text>
+          {/* ⭐ Search filter */}
+<TextInput
+  placeholder="Buscar item..."
+  value={searchText}
+  onChangeText={setSearchText}
+  style={{
+    backgroundColor: "#eee",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 16,
+    fontSize: 16,
+  }}
+/>
 
           {/* ⭐ Lista de items */}
-          {menuItems.map((item) => {
+          {menuItems
+  .filter((item) =>
+    item.ItemName.toLowerCase().includes(searchText.toLowerCase())
+  )
+  .map((item) => {
             const selected = selectedIds.includes(item.id);
 
             return (
