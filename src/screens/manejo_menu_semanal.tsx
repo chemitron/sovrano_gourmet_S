@@ -287,6 +287,7 @@ export default function WeeklyMenuScreen() {
           {/* ⭐ Search filter */}
 <TextInput
   placeholder="Buscar item..."
+  placeholderTextColor="#666"
   value={searchText}
   onChangeText={setSearchText}
   style={{
@@ -295,6 +296,7 @@ export default function WeeklyMenuScreen() {
     borderRadius: 8,
     marginBottom: 16,
     fontSize: 16,
+    color: "#111", 
   }}
 />
 

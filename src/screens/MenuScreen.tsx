@@ -85,15 +85,27 @@ export default function MenuScreen() {
     return () => unsub();
   }, []);
 
-  // -----------------------------------------------------
-  // FILTER EMPLOYEE-ONLY ITEMS
-  // -----------------------------------------------------
   const visibleItems = items.filter((item) => {
-    if (item.soloEmpleado) {
-      return role === "empleado" || role === "admin" || role === "chef" || role === "recepcion" || role === "contador";
-    }
-    return true;
-  });
+  const isStaff =
+    role === "empleado" ||
+    role === "admin" ||
+    role === "chef" ||
+    role === "recepcion" ||
+    role === "contador";
+
+  // Staff can see all soloEmpleado items (even if menu_semanal = true)
+  if (item.soloEmpleado === true) {
+    return isStaff;
+  }
+
+  // Hide menu_semanal items unless they were already allowed above
+  if (item.menu_semanal === true) {
+    return false;
+  }
+
+  // Everyone can see normal items
+  return true;
+});
 
   // -----------------------------------------------------
   // LOAD CATEGORIES
