@@ -300,10 +300,6 @@ useEffect(() => {
           <Text style={styles.loadingText}>{loadingMessage}</Text>
         </View>
       )}
-      
-      <ScrollView
-        contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled">
 
         <View>
           <Logo/>
@@ -398,8 +394,7 @@ useEffect(() => {
             onPress={() => router.push("/politicas")}
           />
         </View>
-      </ScrollView>
-            <View style={styles.versionContainer}>
+        <View style={styles.versionContainer}>
   <Text style={styles.versionText}>
   Sovrano versión {appVersion}  
   {Platform.OS === "ios" && ` (build ${iosBuildNumber})`}
@@ -407,6 +402,7 @@ useEffect(() => {
 </Text>
 
 </View>
+            
 </ScrollView>
   </KeyboardAvoidingView>
     </GradientBackground>
@@ -504,8 +500,7 @@ versionContainer: {
   width: "100%",
   alignItems: "center",
   paddingVertical: 10,
-  position: "absolute",
-  bottom: 10,
+  marginTop: 10,
 },
 
 versionText: {
