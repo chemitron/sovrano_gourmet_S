@@ -2,13 +2,16 @@ import { Stack } from "expo-router";
 import {
   collection,
   doc,
+  getDoc,
   onSnapshot,
   orderBy,
   query,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -23,6 +26,7 @@ import { Ingredient } from "../../../src/types";
 export default function ComprasNecesarias() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [purchaseAmounts, setPurchaseAmounts] = useState<Record<string, string>>({});
 
   // Lista compartida en Firestore
   const [savedList, setSavedList] = useState<any[]>([]);
@@ -105,11 +109,67 @@ export default function ComprasNecesarias() {
     setSearch("");
   };
 
-  // 7. Marcar como comprado (eliminar de la lista)
-  const handleRemove = (id: string) => {
+  const processPurchase = async (id: string, amount: number) => {
+  try {
+    // 1. Update inventory
+    const ingRef = doc(db, "ingredients", id);
+    const ingSnap = await getDoc(ingRef);
+
+    if (ingSnap.exists()) {
+      const ing = ingSnap.data();
+      const newStock = (ing.stock || 0) + amount;
+
+      await updateDoc(ingRef, { stock: newStock });
+    }
+
+    // 2. Remove from comprasNecesarias list
     const newList = savedList.filter((item) => item.id !== id);
-    saveList(newList);
-  };
+    await saveList(newList);
+
+    // 3. Clear input
+    setPurchaseAmounts((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+
+  } catch (e) {
+    console.log("Error updating inventory:", e);
+  }
+};
+
+  // 7. Marcar como comprado (eliminar de la lista)
+  const handleRemove = async (id: string, suggested: number) => {
+  const rawValue = purchaseAmounts[id];
+
+  // If empty, ask user what to do
+  if (!rawValue || rawValue.trim() === "") {
+    Alert.alert(
+      "Cantidad vacía",
+      "No ingresaste una cantidad comprada. ¿Deseas usar la cantidad mínima sugerida?",
+      [
+        {
+          text: "Volver",
+          style: "cancel",
+        },
+        {
+          text: "Usar sugerida",
+          onPress: () => processPurchase(id, suggested),
+        },
+      ]
+    );
+    return;
+  }
+
+  // If user typed a value, process normally
+  const amount = Number(rawValue);
+  if (isNaN(amount) || amount <= 0) {
+    Alert.alert("Error", "Ingresa una cantidad válida.");
+    return;
+  }
+
+  processPurchase(id, amount);
+};
 
   // 8. Unir lowStock + lista guardada
   const mergedList = [
@@ -186,9 +246,25 @@ export default function ComprasNecesarias() {
                     </Text>
                   </Text>
 
+                  <Text style={styles.detail}>Cantidad comprada:</Text>
+
+<TextInput
+  style={styles.input}
+  keyboardType="numeric"
+  placeholder="Ingresa cantidad..."
+  placeholderTextColor="#555"
+  value={purchaseAmounts[ing.id] || ""}
+  onChangeText={(val) =>
+    setPurchaseAmounts((prev) => ({
+      ...prev,
+      [ing.id]: val
+    }))
+  }
+/>
+
                   <TouchableOpacity
                     style={styles.buyButton}
-                    onPress={() => handleRemove(ing.id)}
+                    onPress={() => handleRemove(ing.id, suggested)}
                   >
                     <Text style={styles.buyText}>Comprado</Text>
                   </TouchableOpacity>
@@ -284,4 +360,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "600",
   },
+  input: {
+  backgroundColor: "#fff",
+  borderWidth: 1,
+  borderColor: "#aaa",
+  padding: 8,
+  borderRadius: 6,
+  marginBottom: 10,
+  fontSize: 16,
+},
 });
