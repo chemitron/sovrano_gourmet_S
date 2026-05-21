@@ -8,5 +8,5 @@ email                       username            role        phoneNumber     ID
 "sovranogourmettester@aol.com" "tester"         "usuario"  password: TesterSovrano2026
 389021Carolina
 npx expo start
-eas build -p ios --profile production
+eas build -p ios --profile production.  (Include QR code)
 eas build -p android --profile production
