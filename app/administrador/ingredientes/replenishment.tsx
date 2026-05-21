@@ -44,6 +44,17 @@ export default function ReplenishmentScreen() {
   const [selected, setSelected] = useState<ReplenishItem[]>([]);
   const [search, setSearch] = useState("");
 
+  // NEW: UI filter state
+  const [viewMode, setViewMode] = useState<"all" | "selected">("all");
+
+  const normalize = (str: string) =>
+    str
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
   // Load ingredients
   useEffect(() => {
     const q = query(collection(db, "ingredients"), orderBy("ingId", "asc"));
@@ -57,25 +68,27 @@ export default function ReplenishmentScreen() {
     return () => unsub();
   }, []);
 
-  // Search filter
+  // Search filter (only affects "all" mode)
   useEffect(() => {
+    if (viewMode === "selected") return;
+
     if (search.trim() === "") {
       setFiltered(ingredients);
     } else {
-      const s = search.toLowerCase();
+      const s = normalize(search);
+
       setFiltered(
         ingredients.filter((ing) =>
-          ing.name.toLowerCase().includes(s)
+          normalize(ing.name).includes(s)
         )
       );
     }
-  }, [search, ingredients]);
+  }, [search, ingredients, viewMode]);
 
   // Add ingredient to replenishment list
   const addToList = (ing: Ingredient) => {
     if (selected.find((s) => s.ingredient.id === ing.id)) return;
 
-    // Auto-suggest quantity based on minStock
     const suggested =
       ing.stock < ing.minStock ? String(ing.minStock - ing.stock) : "";
 
@@ -129,61 +142,98 @@ export default function ReplenishmentScreen() {
       <GradientBackground>
         <ScrollView contentContainerStyle={styles.container}>
 
-          {/* SEARCH BAR */}
-          <TextInput
-            style={styles.search}
-            placeholder="Buscar ingrediente..."
-            value={search}
-            onChangeText={setSearch}
-          />
+          {/* FILTER BUTTONS */}
+          <View style={styles.filterRow}>
+            <TouchableOpacity
+              style={[
+                styles.filterButton,
+                viewMode === "all" && styles.filterButtonActive,
+              ]}
+              onPress={() => setViewMode("all")}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  viewMode === "all" && styles.filterTextActive,
+                ]}
+              >
+                Todos
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.filterButton,
+                viewMode === "selected" && styles.filterButtonActive,
+              ]}
+              onPress={() => setViewMode("selected")}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  viewMode === "selected" && styles.filterTextActive,
+                ]}
+              >
+                Seleccionados
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* SEARCH BAR (only in "all" mode) */}
+          {viewMode === "all" && (
+            <TextInput
+              style={styles.search}
+              placeholder="Buscar ingrediente..."
+              value={search}
+              onChangeText={setSearch}
+            />
+          )}
 
           <Button_style2
             title="Re-abastecer"
             onPress={replenishAll}
           />
 
-          <Text style={styles.sectionTitle}>Selecciona ingredientes</Text>
-
-          {filtered.map((ing) => (
-            <TouchableOpacity
-              key={ing.id}
-              style={styles.card}
-              onPress={() => addToList(ing)}
-            >
-              <View style={styles.row}>
-                <Text style={styles.name}>{ing.name}</Text>
-                <Text style={styles.unit}>{ing.unit}</Text>
-              </View>
-
-              <Text style={styles.sub}>
-                Inventario: {ing.stock} • Min: {ing.minStock}
-              </Text>
-            </TouchableOpacity>
-          ))}
-
-          {selected.length > 0 && (
-            <>
-              {selected.map((item) => (
-                <View key={item.ingredient.id} style={styles.selectedCard}>
-                  <Text style={styles.selectedName}>{item.ingredient.name}</Text>
-
-                  <TextInput
-                    style={styles.input}
-                    keyboardType="numeric"
-                    placeholder="Cantidad"
-                    value={item.qty}
-                    onChangeText={(v) => updateQty(item.ingredient.id, v)}
-                  />
-
-                  {item.ingredient.stock < item.ingredient.minStock && (
-                    <Text style={styles.suggest}>
-                      Sugerido: {item.ingredient.minStock - item.ingredient.stock}
-                    </Text>
-                  )}
+          {/* ALL INGREDIENTS LIST */}
+          {viewMode === "all" &&
+            filtered.map((ing) => (
+              <TouchableOpacity
+                key={ing.id}
+                style={styles.card}
+                onPress={() => addToList(ing)}
+              >
+                <View style={styles.row}>
+                  <Text style={styles.name}>{ing.name}</Text>
+                  <Text style={styles.unit}>{ing.unit}</Text>
                 </View>
-              ))}
-            </>
-          )}
+
+                <Text style={styles.sub}>
+                  Inventario: {ing.stock} • Min: {ing.minStock}
+                </Text>
+              </TouchableOpacity>
+            ))}
+
+          {/* SELECTED INGREDIENTS LIST */}
+          {viewMode === "selected" &&
+            selected.map((item) => (
+              <View key={item.ingredient.id} style={styles.selectedCard}>
+                <Text style={styles.selectedName}>{item.ingredient.name}</Text>
+
+                <TextInput
+                  style={styles.input}
+                  keyboardType="numeric"
+                  placeholder="Cantidad"
+                  value={item.qty}
+                  onChangeText={(v) => updateQty(item.ingredient.id, v)}
+                />
+
+                {item.ingredient.stock < item.ingredient.minStock && (
+                  <Text style={styles.suggest}>
+                    Sugerido: {item.ingredient.minStock - item.ingredient.stock}
+                  </Text>
+                )}
+              </View>
+            ))}
 
         </ScrollView>
       </GradientBackground>
@@ -197,6 +247,35 @@ const styles = StyleSheet.create({
     gap: 20,
   },
 
+  filterRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+
+  filterButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: "#ddd",
+    marginHorizontal: 5,
+    alignItems: "center",
+  },
+
+  filterButtonActive: {
+    backgroundColor: "#3A2F2F",
+  },
+
+  filterText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+
+  filterTextActive: {
+    color: "white",
+  },
+
   search: {
     backgroundColor: "#fff",
     padding: 12,
@@ -204,12 +283,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
     fontSize: 16,
-  },
-
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#333",
   },
 
   card: {
