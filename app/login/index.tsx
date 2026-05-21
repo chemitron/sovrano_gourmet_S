@@ -6,7 +6,7 @@ import { Stack, router } from "expo-router";
 import { sendPasswordResetEmail, signInAnonymously, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { deleteDoc, doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import Button_style2 from "../../components/Button_style2";
 import GradientBackground from "../../components/GradientBackground";
 import Logo from "../../components/Logo";
@@ -79,6 +79,7 @@ useEffect(() => {
       doc(db, "users", user.uid),
       {
         role: "invitado",
+        platform: Platform.OS,
         createdAt: new Date().toISOString(),
       },
       { merge: true }
@@ -159,7 +160,9 @@ useEffect(() => {
     // ✅ Update LastLogin field
     await setDoc(
       userRef,
-      { lastLogin: new Date().toISOString() }, // store ISO date string
+      { lastLogin: new Date().toISOString(),
+        platform: Platform.OS,
+       },
       { merge: true }
     );
     if (rememberEmail) {
@@ -282,7 +285,15 @@ useEffect(() => {
         }} 
       />
     <GradientBackground>
-
+<KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === "ios" ? "padding" : undefined}
+    keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+  >
+    <ScrollView
+      contentContainerStyle={styles.scrollContainer}
+      keyboardShouldPersistTaps="handled"
+    >
       {loading && (
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#fff" />
@@ -396,7 +407,8 @@ useEffect(() => {
 </Text>
 
 </View>
-
+</ScrollView>
+  </KeyboardAvoidingView>
     </GradientBackground>
     </>
   );
