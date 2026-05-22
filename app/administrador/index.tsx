@@ -2,7 +2,7 @@ import { router, Stack } from "expo-router";
 import { signOut } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { Alert, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import Button_style2 from "../../components/Button_style2";
 import GradientBackground from "../../components/GradientBackground";
 import { auth, db } from "../../services/firestore/firebase";
@@ -82,89 +82,97 @@ export default function AdminIndex() {
   };
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          headerTitleAlign: "center",
-          headerTitle: "Administrador",
-          headerBackVisible: false,
-        }}
-      />
+  <>
+    <Stack.Screen
+      options={{
+        headerTitleAlign: "center",
+        headerTitle: "Administrador",
+        headerBackVisible: false,
+      }}
+    />
 
-      <GradientBackground>
-        <View style={styles.container}>
-          <View
-            style={{
-              width: windowWidth > 500 ? "70%" : "90%",
-              height: windowHeight > 600 ? "60%" : "90%",
-              flexDirection: "column",
-              gap: 10,
-            }}
-          >
-            <View>
-              <Text style={styles.welcomeText}>
-                {`${greeting}, ${username || "invitado"} 👋`}
-              </Text>
-            </View>
-
-            <View>
-              <Text style={styles.welcomeText}>¡Nos alegra verte en Sovrano!</Text>
-            </View>
-
-            <Button_style2
-              title="Manejo empleados"
-              onPress={() => router.push("/administrador/manejo_empleados")}
-            />
-            <Button_style2
-              title="Manejo responsabilidades"
-              onPress={() => router.push("/administrador/manejo_responsabilidad")}
-            />
-            <Button_style2
-              title="Manejo menu categorias"
-              onPress={() => router.push("/administrador/manejo_menu_categorias")}
-            />
-            <Button_style2
-              title="Manejo platos del menu"
-              onPress={() => router.push("/administrador/manejo_menu_items")}
-            />
-            <Button_style2
-              title="Manejo ingredientes"
-              onPress={() => router.push("/administrador/ingredientes")}
-            />
-            <Button_style2
-              title="Ingresar como empleado"
-              onPress={() => router.push("/empleado")}
-            />
-            <Button_style2
-              title="Cuentas con balances"
-              onPress={() => router.push("/administrador/cuentas")}
-            />
-            <Button_style2
-              title="Manejo menú semanal"
-              onPress={() => router.push("/administrador/manejo_menu_semanal")}
-            />
-            <Button_style2
-              title="Reportes"
-              onPress={() => router.push("/administrador/reports")}
-            />
-
-            <Button_style2
-              title={isOpen ? "Cerrar cocina" : "Abrir cocina"}
-              onPress={toggleCocina}
-            />
-
-            {!isOpen && (
-              <Text style={[styles.welcomeText, { color: "#b30000" }]}>
-                {closedMessage}
-              </Text>
-            )}
-
-            <Button_style2 title="Cerrar sesión" onPress={handleLogout} />
+    <GradientBackground>
+      <ScrollView contentContainerStyle={styles.container}>
+        <View
+          style={{
+            width: windowWidth > 500 ? "70%" : "90%",
+            flexDirection: "column",
+            gap: 10,
+            paddingBottom: 40,
+          }}
+        >
+          <View>
+            <Text style={styles.welcomeText}>
+              {`${greeting}, ${username || "invitado"} 👋`}
+            </Text>
           </View>
+
+          <View>
+            <Text style={styles.welcomeText}>¡Nos alegra verte en Sovrano!</Text>
+          </View>
+
+          <Button_style2
+            title="Manejo empleados"
+            onPress={() => router.push("/administrador/manejo_empleados")}
+          />
+
+          <Button_style2
+            title="Manejo responsabilidades"
+            onPress={() => router.push("/administrador/manejo_responsabilidad")}
+          />
+
+          <Button_style2
+            title="Manejo menu categorias"
+            onPress={() => router.push("/administrador/manejo_menu_categorias")}
+          />
+
+          <Button_style2
+            title="Manejo platos del menu"
+            onPress={() => router.push("/administrador/manejo_menu_items")}
+          />
+
+          <Button_style2
+            title="Manejo ingredientes"
+            onPress={() => router.push("/administrador/ingredientes")}
+          />
+
+          <Button_style2
+            title="Ingresar como empleado"
+            onPress={() => router.push("/empleado")}
+          />
+
+          <Button_style2
+            title="Cuentas con balances"
+            onPress={() => router.push("/administrador/cuentas")}
+          />
+
+          <Button_style2
+            title="Manejo menú semanal"
+            onPress={() => router.push("/administrador/manejo_menu_semanal")}
+          />
+
+          <Button_style2
+            title="Reportes"
+            onPress={() => router.push("/administrador/reports")}
+          />
+
+          <Button_style2
+            title={isOpen ? "Cerrar cocina" : "Abrir cocina"}
+            onPress={toggleCocina}
+          />
+
+          {!isOpen && (
+            <Text style={[styles.welcomeText, { color: "#b30000" }]}>
+              {closedMessage}
+            </Text>
+          )}
+
+          <Button_style2 title="Cerrar sesión" onPress={handleLogout} />
         </View>
-      </GradientBackground>
-    </>
-  );
+      </ScrollView>
+    </GradientBackground>
+  </>
+);
 }
 
 const styles = StyleSheet.create({
