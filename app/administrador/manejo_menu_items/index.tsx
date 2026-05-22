@@ -9,12 +9,13 @@ import {
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
   Image,
+  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import Button_style2 from "../../../components/Button_style2";
 import GradientBackground from "../../../components/GradientBackground";
@@ -33,6 +34,7 @@ export default function Manejo_Menu_ItemsIndex() {
   const [loading, setLoading] = useState(true);
   const [availabilityFilter, setAvailabilityFilter] = useState<"all" | "available" | "unavailable">("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [searchText, setSearchText] = useState("");
 
   // Load categories
   useEffect(() => {
@@ -82,166 +84,188 @@ export default function Manejo_Menu_ItemsIndex() {
   }
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          headerTitleAlign: "center",
-          headerTitle: "Platos del Menú",
-        }}
-      />
+  <>
+    <Stack.Screen
+      options={{
+        headerTitleAlign: "center",
+        headerTitle: "Platos del Menú",
+      }}
+    />
 
-      <GradientBackground>
-        <View style={{ flex: 1, padding: 20 }}>
+    <GradientBackground>
+      <View style={{ flex: 1, padding: 20 }}>
 
-          {/* ADD NEW ITEM BUTTON */}
-          <Button_style2
-                      title="+ Agregar Nuevo Plato"
-                      onPress={() =>
-              router.push("/administrador/manejo_menu_items/add_menu_items")
-            }
-                    />
-          {/* AVAILABILITY FILTER */}
-<View style={{ marginBottom: 20 }}>
-  <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 6 }}>
-    Mostrar
-  </Text>
+        {/* ADD NEW ITEM BUTTON */}
+        <Button_style2
+          title="+ Agregar Nuevo Plato"
+          onPress={() =>
+            router.push("/administrador/manejo_menu_items/add_menu_items")
+          }
+        />
 
-  <View
-    style={{
-      borderWidth: 1,
-      borderColor: "transparent",
-      borderRadius: 8,
-      backgroundColor: "'#E9E4D4'",
-    }}
-  >
-    {/* AVAILABILITY TOGGLE BUTTONS */}
-<View style={styles.toggleContainer}>
-  
-  <TouchableOpacity
-    onPress={() => setAvailabilityFilter("all")}
-    style={[
-      styles.toggleButton,
-      availabilityFilter === "all" && styles.toggleButtonActive,
-      { borderTopLeftRadius: 10, borderBottomLeftRadius: 10 }
-    ]}
-  >
-    <Text
-      style={[
-        styles.toggleButtonText,
-        availabilityFilter === "all" && styles.toggleButtonTextActive
-      ]}
-    >
-      Todos
-    </Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity
-    onPress={() => setAvailabilityFilter("available")}
-    style={[
-      styles.toggleButton,
-      availabilityFilter === "available" && styles.toggleButtonActive
-    ]}
-  >
-    <Text
-      style={[
-        styles.toggleButtonText,
-        availabilityFilter === "available" && styles.toggleButtonTextActive
-      ]}
-    >
-      Disponible
-    </Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity
-    onPress={() => setAvailabilityFilter("unavailable")}
-    style={[
-      styles.toggleButton,
-      availabilityFilter === "unavailable" && styles.toggleButtonActive,
-      { borderTopRightRadius: 10, borderBottomRightRadius: 10 }
-    ]}
-  >
-    <Text
-      style={[
-        styles.toggleButtonText,
-        availabilityFilter === "unavailable" && styles.toggleButtonTextActive
-      ]}
-    >
-      No disponible
-    </Text>
-  </TouchableOpacity>
-
-</View>
-{/* CATEGORY FILTER */}
-<Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 6 }}>
-  Categoría
-</Text>
-
-<View
-  style={{
-    borderWidth: 1,
-    borderColor: "transparent",
-    borderRadius: 8,
-    backgroundColor: "'#E9E4D4'",
-  }}
->
-  <View style={styles.toggleContainer}>
-    
-    {/* ALL CATEGORIES */}
-    <TouchableOpacity
-      onPress={() => setCategoryFilter("all")}
-      style={[
-        styles.toggleButton,
-        categoryFilter === "all" && styles.toggleButtonActive,
-        { borderTopLeftRadius: 10, borderBottomLeftRadius: 10 }
-      ]}
-    >
-      <Text
-        style={[
-          styles.toggleButtonText,
-          categoryFilter === "all" && styles.toggleButtonTextActive
-        ]}
-      >
-        Todas
-      </Text>
-    </TouchableOpacity>
-
-    {/* DYNAMIC CATEGORY BUTTONS */}
-    {categories.map((cat, index) => {
-      const isLast = index === categories.length - 1;
-
-      return (
-        <TouchableOpacity
-          key={cat.id}
-          onPress={() => setCategoryFilter(cat.id)}
-          style={[
-            styles.toggleButton,
-            categoryFilter === cat.id && styles.toggleButtonActive,
-            isLast && { borderTopRightRadius: 10, borderBottomRightRadius: 10 }
-          ]}
-        >
-          <Text
-            style={[
-              styles.toggleButtonText,
-              categoryFilter === cat.id && styles.toggleButtonTextActive
-            ]}
+        {/* AVAILABILITY FILTER */}
+        <View style={{ marginBottom: 20 }}>
+          <View
+            style={{
+              borderWidth: 1,
+              borderColor: "transparent",
+              borderRadius: 8,
+              backgroundColor: "'#E9E4D4'",
+              marginTop: 10,
+            }}
           >
-            {cat.Categoryname}
-          </Text>
-        </TouchableOpacity>
-      );
-    })}
-  </View>
+            {/* AVAILABILITY TOGGLE BUTTONS */}
+            <View style={styles.toggleContainer}>
+              <TouchableOpacity
+                onPress={() => setAvailabilityFilter("all")}
+                style={[
+                  styles.toggleButton,
+                  availabilityFilter === "all" && styles.toggleButtonActive,
+                  { borderTopLeftRadius: 10, borderBottomLeftRadius: 10 },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.toggleButtonText,
+                    availabilityFilter === "all" &&
+                      styles.toggleButtonTextActive,
+                  ]}
+                >
+                  Todos
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setAvailabilityFilter("available")}
+                style={[
+                  styles.toggleButton,
+                  availabilityFilter === "available" &&
+                    styles.toggleButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.toggleButtonText,
+                    availabilityFilter === "available" &&
+                      styles.toggleButtonTextActive,
+                  ]}
+                >
+                  Disponible
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setAvailabilityFilter("unavailable")}
+                style={[
+                  styles.toggleButton,
+                  availabilityFilter === "unavailable" &&
+                    styles.toggleButtonActive,
+                  { borderTopRightRadius: 10, borderBottomRightRadius: 10 },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.toggleButtonText,
+                    availabilityFilter === "unavailable" &&
+                      styles.toggleButtonTextActive,
+                  ]}
+                >
+                  No disponible
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* CATEGORY FILTER */}
+            <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 6 }}>
+              Categoría
+            </Text>
+
+            <View
+              style={{
+                borderWidth: 1,
+                borderColor: "transparent",
+                borderRadius: 8,
+                backgroundColor: "'#E9E4D4'",
+              }}
+            >
+              <View style={styles.toggleContainer}>
+                {/* ALL CATEGORIES */}
+                <TouchableOpacity
+                  onPress={() => setCategoryFilter("all")}
+                  style={[
+                    styles.toggleButton,
+                    categoryFilter === "all" && styles.toggleButtonActive,
+                    { borderTopLeftRadius: 10, borderBottomLeftRadius: 10 },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.toggleButtonText,
+                      categoryFilter === "all" &&
+                        styles.toggleButtonTextActive,
+                    ]}
+                  >
+                    Todas
+                  </Text>
+                </TouchableOpacity>
+
+                {/* DYNAMIC CATEGORY BUTTONS */}
+                {categories.map((cat, index) => {
+                  const isLast = index === categories.length - 1;
+
+                  return (
+                    <TouchableOpacity
+                      key={cat.id}
+                      onPress={() => setCategoryFilter(cat.id)}
+                      style={[
+                        styles.toggleButton,
+                        categoryFilter === cat.id &&
+                          styles.toggleButtonActive,
+                        isLast && {
+                          borderTopRightRadius: 10,
+                          borderBottomRightRadius: 10,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.toggleButtonText,
+                          categoryFilter === cat.id &&
+                            styles.toggleButtonTextActive,
+                        ]}
+                      >
+                        {cat.Categoryname}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* SEARCH BAR */}
+<View style={{ marginBottom: 0 }}>
+  <TextInput
+    placeholder="Buscar plato..."
+    placeholderTextColor="#666"
+    value={searchText}
+    onChangeText={setSearchText}
+    style={{
+      backgroundColor: "#fff",
+      padding: 12,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: "#ccc",
+      fontSize: 16,
+    }}
+  />
 </View>
 
-  </View>
-</View>
 
-          {/* CATEGORY GROUPS */}
-          <FlatList
-            data={categories}
-            keyExtractor={(cat) => cat.id}
-            renderItem={({ item: category }) => {
-              const itemsInCategory = items
+        {/* LISTA DE PLATOS SIN CATEGORÍAS — SORTED ALPHABETICALLY */}
+        <ScrollView style={{ marginTop: 0 }}>
+          {items
   // CATEGORY FILTER
   .filter((i) => {
     if (categoryFilter === "all") return true;
@@ -253,109 +277,134 @@ export default function Manejo_Menu_ItemsIndex() {
     if (availabilityFilter === "unavailable") return i.isAvailable === false;
     return true;
   })
-  // GROUP BY CURRENT CATEGORY IN FLATLIST
-  .filter((i) => i.categoryId === Number(category.id));
+  // SEARCH FILTER
+  .filter((i) =>
+    i.ItemName.toLowerCase().includes(searchText.toLowerCase())
+  )
+  // SORT ALPHABETICALLY
+  .sort((a, b) => a.ItemName.localeCompare(b.ItemName))
+  .map((item) => (
+              <View key={item.id} style={styles.itemCard}>
+                {/* IMAGE + TITLE ROW */}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 0,
+                  }}
+                >
+                  {item.imageUrl ? (
+                    <Image
+                      source={{ uri: item.imageUrl }}
+                      style={{
+                        width: 70,
+                        height: 70,
+                        borderRadius: 8,
+                        marginRight: 12,
+                        backgroundColor: "#eee",
+                      }}
+                    />
+                  ) : (
+                    <View
+                      style={{
+                        width: 70,
+                        height: 70,
+                        borderRadius: 8,
+                        marginRight: 12,
+                        backgroundColor: "#ccc",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text style={{ color: "#666", fontSize: 12 }}>
+                        Sin imagen
+                      </Text>
+                    </View>
+                  )}
 
-              return (
-                <View style={{ marginBottom: 30 }}>
-                  {/* CATEGORY HEADER */}
-                  <Text style={styles.categoryHeader}>
-                    {category.Categoryname}
-                  </Text>
+                  {/* NAME + EDIT BUTTONS */}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.itemName}>{item.ItemName}</Text>
 
-                  {/* ITEMS */}
-                  {itemsInCategory.map((item) => (
-  <View key={item.id} style={styles.itemCard}>
+                    <View style={{ marginBottom: 5 }}>
+                      <Button_style2
+                        title="Editar"
+                        onPress={() =>
+                          router.push({
+                            pathname:
+                              "/administrador/manejo_menu_items/edit_menu_items",
+                            params: { itemId: item.id },
+                          })
+                        }
+                      />
+                    </View>
 
-    {/* IMAGE + TITLE ROW */}
-    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-      {/* ITEM IMAGE */}
-      {item.imageUrl ? (
-        <Image
-          source={{ uri: item.imageUrl }}
-          style={{
-            width: 70,
-            height: 70,
-            borderRadius: 8,
-            marginRight: 12,
-            backgroundColor: "#eee",
-          }}
-        />
-      ) : (
-        <View
-          style={{
-            width: 70,
-            height: 70,
-            borderRadius: 8,
-            marginRight: 12,
-            backgroundColor: "#ccc",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ color: "#666", fontSize: 12 }}>Sin imagen</Text>
-        </View>
-      )}
+                    <Button_style2
+                      title="Ingredientes"
+                      onPress={() =>
+                        router.push({
+                          pathname:
+                            "/administrador/manejo_menu_items/itemIngredients",
+                          params: { itemId: item.id },
+                        })
+                      }
+                    />
+                  </View>
+                </View>
 
-      {/* NAME + EDIT BUTTON */}
-      <View style={{ flex: 1 }}>
-        <Text style={styles.itemName}>{item.ItemName}</Text>
-        
-        <View style={{ marginBottom: 5 }}>
-        <Button_style2
-                    title="Editar"
-                    onPress={() =>
-            router.push({
-              pathname: "/administrador/manejo_menu_items/edit_menu_items",
-              params: { itemId: item.id },
-            })
-          }
-                  />
+                {/* DETAILS GRID */}
+                <View style={styles.grid}>
+                  <View style={styles.cell}>
+                    <Text style={styles.itemDetails}>
+                      Valor cliente: ${item.priceCustomer}
+                    </Text>
                   </View>
 
-                  <Button_style2
-                    title="Ingredientes"
-                    onPress={() =>
-            router.push({
-              pathname: "/administrador/manejo_menu_items/itemIngredients",
-              params: { itemId: item.id },
-            })
-          }
-                  />
-      </View>
-    </View>
+                  <View style={styles.cell}>
+                    <Text style={styles.itemDetails}>
+                      Tiempo: {item.prepTime} min
+                    </Text>
+                  </View>
 
-    {/* DETAILS */}
-    <Text style={styles.itemDetails}>Precio cliente: ${item.priceCustomer}</Text>
-    <Text style={styles.itemDetails}>Precio empleado: ${item.priceEmployee}</Text>
-    <Text style={styles.itemDetails}>Tiempo: {item.prepTime} min</Text>
-    <View style={styles.statusRow}>
-  <Text style={styles.itemDetails}>
-    {item.isAvailable ? "Plato Activo" : "Plato Inactivo"}
-  </Text>
+                  <View style={styles.cell}>
+                    <Text style={styles.itemDetails}>
+                      Valor empleado: ${item.priceEmployee}
+                    </Text>
+                  </View>
 
-  {item.soloEmpleado && (
-    <Text
-      style={[
-        styles.itemDetails,
-        { fontWeight: "bold", color: "#8B0000", marginLeft: 12 }
-      ]}
-    >
-      Solo empleado
-    </Text>
-  )}
-</View>
-
-  </View>
-))}
+                  <View style={styles.cell}>
+                    <Text style={styles.itemDetails}>
+                      {item.isAvailable
+                        ? "Plato Activo"
+                        : "Plato Inactivo"}
+                    </Text>
+                  </View>
                 </View>
-              );
-            }}
-          />
-        </View>
-      </GradientBackground>
-    </>
-  );
+
+                {/* SOLO EMPLEADO */}
+                <View style={styles.statusRow}>
+                  {item.soloEmpleado && (
+                    <Text
+                      style={[
+                        styles.itemDetails,
+                        {
+                          fontWeight: "bold",
+                          color: "#8B0000",
+                          marginLeft: 12,
+                        },
+                      ]}
+                    >
+                      Solo empleado
+                    </Text>
+                  )}
+                </View>
+              </View>
+            ))}
+        </ScrollView>
+      </View>
+    </GradientBackground>
+  </>
+);
 }
 
 const styles = StyleSheet.create({
@@ -448,6 +497,17 @@ toggleButtonTextActive: {
 statusRow: {
   flexDirection: "row",
   alignItems: "center",
+},
+grid: {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  justifyContent: "space-between",
+  marginTop: 8,
+},
+
+cell: {
+  width: "48%",     // two columns
+  marginBottom: 10, // spacing between rows
 },
 
 });

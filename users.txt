@@ -10,3 +10,7 @@ email                       username            role        phoneNumber     ID
 npx expo start
 eas build -p ios --profile production.  (Include QR code)
 eas build -p android --profile production
+
+
+Mover nombre cliente y estilista despue de ordenar
+Recepcion not showing balances
