@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -10,7 +11,7 @@ import {
   query,
   runTransaction,
   updateDoc,
-  where,
+  where
 } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from "react-native";
@@ -232,6 +233,24 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
       served: true,
       canceledAt: new Date(),
     });
+
+    // 4. DELETE venta record
+    const employeeRoles = ["empleado", "contador", "recepcion", "chef", "admin"];
+    const orderRole = order.role ?? ""; // normalize undefined → ""
+
+    const ventaPath = employeeRoles.includes(orderRole)
+      ? "ventas/empleado"
+      : "ventas/cliente";
+
+    const ventasRef = collection(db, ventaPath);
+
+    // Find venta by orderNumber
+    const q = query(ventasRef, where("orderNumber", "==", order.orderNumber));
+    const ventaSnap = await getDocs(q);
+
+    for (const docSnap of ventaSnap.docs) {
+      await deleteDoc(doc(db, ventaPath, docSnap.id));
+    }
 
   } catch (e) {
     Alert.alert("Error", "No se pudo cancelar y ajustar el balance");

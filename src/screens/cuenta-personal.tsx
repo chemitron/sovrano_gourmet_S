@@ -1,15 +1,18 @@
 import { Stack, router } from "expo-router";
 import {
+  addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
+  getDocs,
   increment,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   updateDoc,
-  where,
+  where
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
@@ -110,31 +113,51 @@ export default function CuentaPersonalScreen() {
 }, [email, role]);
 
   // ---------------------------
-  // Cancel order
-  // ---------------------------
-  const cancelOrder = async (orderId: string) => {
-    if (!email) return;
+// Cancel order
+// ---------------------------
+const cancelOrder = async (orderId: string) => {
+  if (!email) return;
 
-    const orderRef = doc(db, "orders", orderId);
-    const snap = await getDoc(orderRef);
-    if (!snap.exists()) return;
+  const orderRef = doc(db, "orders", orderId);
+  const snap = await getDoc(orderRef);
+  if (!snap.exists()) return;
 
-    const order = snap.data() as Order;
+  const order = snap.data() as Order;
 
-    await updateDoc(orderRef, {
-      status: "cancelado",
-      served: true, //This is needed for chef ordenes so cancelled orders do not show
-      cancelledAt: new Date(),
-      cancelledBy: auth.currentUser?.uid ?? null,
+  // 1. Mark order as cancelled
+  await updateDoc(orderRef, {
+    status: "cancelado",
+    served: true,
+    cancelledAt: new Date(),
+    cancelledBy: auth.currentUser?.uid ?? null,
+  });
+
+  // 2. Reverse balance if needed
+  if (order.chargedToAccount) {
+    const cuentaRef = doc(db, "cuentas_personales", email);
+    await updateDoc(cuentaRef, {
+      balance: increment(-(order.total ?? 0)),
     });
+  }
 
-    if (order.chargedToAccount) {
-      const cuentaRef = doc(db, "cuentas_personales", email);
-      await updateDoc(cuentaRef, {
-        balance: increment(-(order.total ?? 0)),
-      });
-    }
-  };
+  // 3. DELETE venta record
+  const employeeRoles = ["empleado", "contador", "recepcion", "chef", "admin"];
+  const orderRole = order.role ?? ""; // normalize undefined → ""
+
+  const ventaPath = employeeRoles.includes(orderRole)
+    ? "ventas/empleado"
+    : "ventas/cliente";
+
+  const ventasRef = collection(db, ventaPath);
+
+  // Find venta by orderNumber
+  const q = query(ventasRef, where("orderNumber", "==", order.orderNumber));
+  const ventaSnap = await getDocs(q);
+
+  for (const docSnap of ventaSnap.docs) {
+    await deleteDoc(doc(db, ventaPath, docSnap.id));
+  }
+};
 
   const canCancel = (order: Order) => {
     if (order.status === "cancelado") return false;
@@ -143,56 +166,72 @@ export default function CuentaPersonalScreen() {
   };
 
   // ---------------------------
-  // Charge ALL pending orders to account
-  // ---------------------------
-  const cargarCuenta = async () => {
-    if (!email) return;
+// Charge ALL pending orders to account
+// ---------------------------
+const cargarCuenta = async () => {
+  if (!email) return;
 
-    const pendingOrders = orders.filter(
-      (o) => !o.chargedToAccount && !o.accountPaid && o.status !== "cancelado"
-    );
+  const pendingOrders = orders.filter(
+    (o) => !o.chargedToAccount && !o.accountPaid && o.status !== "cancelado"
+  );
 
-    if (pendingOrders.length === 0) {
-      Alert.alert("Sin órdenes", "No hay órdenes pendientes para cargar a la cuenta.");
-      return;
-    }
+  if (pendingOrders.length === 0) {
+    Alert.alert("Sin órdenes", "No hay órdenes pendientes para cargar a la cuenta.");
+    return;
+  }
 
-    const totalToCharge = pendingOrders.reduce(
-      (sum, o) => sum + (o.total ?? 0),
-      0
-    );
+  const totalToCharge = pendingOrders.reduce(
+    (sum, o) => sum + (o.total ?? 0),
+    0
+  );
 
-    const cuentaRef = doc(db, "cuentas_personales", email);
+  const cuentaRef = doc(db, "cuentas_personales", email);
 
-    try {
-      for (const order of pendingOrders) {
-        const orderRef = doc(db, "orders", order.id);
+  try {
+    for (const order of pendingOrders) {
+      const orderRef = doc(db, "orders", order.id);
 
-        await updateDoc(orderRef, {
-          chargedToAccount: true,
-          paymentMethod: "cuenta-personal-invitado",
-          paymentStatus: "charged",
-          approvalStatus: "aprobado",
-          paidAt: serverTimestamp(),
-          status: "cargado a cuenta",
-          served: false,
-        });
-      }
-
-      await updateDoc(cuentaRef, {
-        balance: increment(totalToCharge),
+      // 1. Update order
+      await updateDoc(orderRef, {
+        chargedToAccount: true,
+        paymentMethod: "cuenta-personal-invitado",
+        paymentStatus: "charged",
+        approvalStatus: "aprobado",
+        paidAt: serverTimestamp(),
+        status: "cargado a cuenta",
+        served: false,
       });
 
-      const lastOrder = pendingOrders[pendingOrders.length - 1];
+      // 2. SAVE venta record
+      const employeeRoles = ["empleado", "contador", "recepcion", "chef", "admin"];
+      const orderRole = order.role ?? "";
 
-      router.push({
-        pathname: "/order/[orderId]/confirmacion",
-        params: { orderId: lastOrder.id },
+      const ventaPath = employeeRoles.includes(orderRole)
+        ? "ventas/empleado"
+        : "ventas/cliente";
+
+      await addDoc(collection(db, ventaPath), {
+        fecha: new Date(),
+        orderNumber: order.orderNumber,
+        valor: order.total ?? 0,
       });
-    } catch (err) {
-      Alert.alert("Error", "No se pudo cargar a la cuenta. Revisa la consola.");
     }
-  };
+
+    // 3. Update account balance
+    await updateDoc(cuentaRef, {
+      balance: increment(totalToCharge),
+    });
+
+    const lastOrder = pendingOrders[pendingOrders.length - 1];
+
+    router.push({
+      pathname: "/order/[orderId]/confirmacion",
+      params: { orderId: lastOrder.id },
+    });
+  } catch (err) {
+    Alert.alert("Error", "No se pudo cargar a la cuenta. Revisa la consola.");
+  }
+};
 
   return (
     <>
