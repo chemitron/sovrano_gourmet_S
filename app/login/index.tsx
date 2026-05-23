@@ -35,6 +35,15 @@ export default function LoginIndex() {
   const passwordRef = useRef<TextInput>(null);
 
 useEffect(() => {
+  if (Constants.appOwnership === "expo") {
+    Alert.alert(
+      "Expo Go",
+      "Remember to update the build number in Firebase (settings/appVersion)."
+    );
+  }
+}, []);
+
+useEffect(() => {
   const loadSavedEmail = async () => {
     const saved = await AsyncStorage.getItem("savedEmail");
     const savedToggle = await AsyncStorage.getItem("rememberEmail");
