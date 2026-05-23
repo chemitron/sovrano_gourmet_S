@@ -7,6 +7,10 @@ export type User = {
   serviceCosts?: Record<string, string>;
   id: string;
   activo?: boolean;
+  phoneNumber?: string;
+  platform?: string;
+  expoPushToken?: string;
+  createdAt?: string | number | Date;
 };
 
 export type ServiceFromUser = {

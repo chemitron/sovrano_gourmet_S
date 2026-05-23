@@ -51,10 +51,15 @@ export default function ReportsIndex() {
               onPress={() => router.push("/administrador/reports/historial")}
             />
 
-                      <Button_style2
-                        title="Reporte de ventas"
-                        onPress={() => router.push("/administrador/reports/ventas")}
-                      />
+            <Button_style2
+                title="Reporte de ventas"
+                onPress={() => router.push("/administrador/reports/ventas")}
+            />
+
+            <Button_style2
+              title="Informacion usuarios"
+              onPress={() => router.push("/administrador/reports/usuarios")}
+            />
           </View>
         </View>
       </GradientBackground>
