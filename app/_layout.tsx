@@ -8,22 +8,29 @@ export default function RootLayout() {
 
   useEffect(() => {
     const verify = async () => {
+      console.log("=== [RootLayout] Version check starting ===");
       const allowed = await checkAppVersion();
+      console.log("[RootLayout] Version check result:", allowed);
 
       if (!allowed) {
+        console.log("[RootLayout] Redirecting to /update-required");
         router.replace("/update-required");
         return;
       }
 
+      console.log("[RootLayout] Version allowed → rendering app");
       setChecked(true);
     };
 
     verify();
   }, []);
 
-  // Prevent rendering anything until version check completes
-  if (!checked) return null;
+  if (!checked) {
+    console.log("[RootLayout] Waiting for version check → render null");
+    return null;
+  }
 
+  console.log("[RootLayout] Rendering Stack");
   return (
     <InvitadoProvider>
       <Stack

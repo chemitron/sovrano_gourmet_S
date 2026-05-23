@@ -4,25 +4,40 @@ import { Platform } from "react-native";
 import { db } from "../services/firestore/firebase";
 
 export const checkAppVersion = async () => {
+  console.log("=== [checkAppVersion] START ===");
+  console.log("App ownership:", Constants.appOwnership);
+  console.log("Expo config:", Constants.expoConfig);
+
   try {
-    // 1. Allow Expo Go (otherwise it will ALWAYS fail)
+    // 1️⃣ Allow Expo Go
     if (Constants.appOwnership === "expo") {
+      console.log("[checkAppVersion] Running in Expo Go → bypass version check");
+      console.log("=== [checkAppVersion] END (Expo Go bypass) ===");
       return true;
     }
 
-    // 2. Load Firestore version requirements
+    // 2️⃣ Load Firestore version requirements
     const versionRef = doc(db, "settings", "appVersion");
-    const snap = await getDoc(versionRef);
+    console.log("[checkAppVersion] Fetching Firestore document:", versionRef.path);
 
-    // If the document doesn't exist, allow the app
-    if (!snap.exists()) return true;
+    const snap = await getDoc(versionRef);
+    console.log("[checkAppVersion] Document exists:", snap.exists());
+
+    if (!snap.exists()) {
+      console.log("[checkAppVersion] Document missing → allow app");
+      console.log("=== [checkAppVersion] END (missing doc) ===");
+      return true;
+    }
 
     const data = snap.data();
+    console.log("[checkAppVersion] Firestore data:", data);
 
     const minBuildNumber = Number(data.minBuildNumber ?? 0);
     const minVersionCode = Number(data.minVersionCode ?? 0);
+    console.log("[checkAppVersion] minBuildNumber:", minBuildNumber);
+    console.log("[checkAppVersion] minVersionCode:", minVersionCode);
 
-    // 3. Read the current installed build number
+    // 3️⃣ Read current installed build number
     let currentBuild = 0;
 
     if (Platform.OS === "ios") {
@@ -31,18 +46,27 @@ export const checkAppVersion = async () => {
       currentBuild = Number(Constants.expoConfig?.android?.versionCode ?? 0);
     }
 
-    // 4. Compare versions
-    const required = Platform.OS === "ios" ? minBuildNumber : minVersionCode;
+    console.log("[checkAppVersion] Platform:", Platform.OS);
+    console.log("[checkAppVersion] Current build:", currentBuild);
 
-    // If current build is missing or invalid, treat as outdated
+    // 4️⃣ Compare versions
+    const required = Platform.OS === "ios" ? minBuildNumber : minVersionCode;
+    console.log("[checkAppVersion] Required minimum:", required);
+
     if (!currentBuild || isNaN(currentBuild)) {
+      console.log("[checkAppVersion] Invalid current build → treat as outdated");
+      console.log("=== [checkAppVersion] END (invalid build) ===");
       return false;
     }
 
-    return currentBuild >= required;
+    const allowed = currentBuild >= required;
+    console.log("[checkAppVersion] Comparison result:", allowed);
+    console.log("=== [checkAppVersion] END ===");
+    return allowed;
 
   } catch (e) {
-    // 5. Fail open — never block the app due to network or Firestore errors
+    console.log("[checkAppVersion] ERROR:", e);
+    console.log("=== [checkAppVersion] END (fail open) ===");
     return true;
   }
 };
