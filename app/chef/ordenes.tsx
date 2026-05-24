@@ -98,11 +98,11 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
 
   useEffect(() => {
   const q = query(
-    collection(db, "orders"),
-    where("paymentStatus", "==", "charged"),
-    where("approvalStatus", "==", "aprobado"),
-    where("served", "==", false)
-  );
+  collection(db, "orders"),
+  where("paymentStatus", "==", "charged"),
+  where("approvalStatus", "==", "aprobado"),
+  where("cancelAccepted", "==", false)
+);
 
   const unsub = onSnapshot(q, (snap) => {
     const list = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Order[];
@@ -229,10 +229,11 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
 
     // 3. Mark order as canceled
     await updateDoc(doc(db, "orders", order.id), {
-      status: "cancelado",
-      served: true,
-      canceledAt: new Date(),
-    });
+  status: "cancelado",
+  served: true,
+  canceledAt: new Date(),
+  cancelAccepted: false,
+});
 
     // 4. DELETE venta record
     const employeeRoles = ["empleado", "contador", "recepcion", "chef", "admin"];
@@ -369,7 +370,16 @@ const sortByClientName = (a: Order, b: Order) => {
                   </View>
 
                   <View style={styles.rightSide}>
-                    {order.status !== "cancelado" && (
+                    {order.status === "cancelado" ? (
+  <Button_style2
+    title="Aceptar cancelación"
+    onPress={() =>
+      updateDoc(doc(db, "orders", order.id), {
+        cancelAccepted: true,
+      })
+    }
+  />
+) : (
   <Button_style2
     title="Cancelar"
     onPress={() =>
@@ -451,7 +461,16 @@ const sortByClientName = (a: Order, b: Order) => {
                   </View>
 
                   <View style={styles.rightSide}>
-                    {order.status !== "cancelado" && (
+                    {order.status === "cancelado" ? (
+  <Button_style2
+    title="Aceptar cancelación"
+    onPress={() =>
+      updateDoc(doc(db, "orders", order.id), {
+        cancelAccepted: true,
+      })
+    }
+  />
+) : (
   <Button_style2
     title="Cancelar"
     onPress={() =>
