@@ -69,7 +69,7 @@ export default function ComprasNecesarias() {
 
   // 3. Ingredientes con bajo inventario
   const lowStock = ingredients
-    .filter((ing) => ing.stock <= ing.minStock)
+    .filter((ing) => ing.stock < ing.minStock)
     .sort((a, b) => a.stock - b.stock);
 
   // 4. Resultados de búsqueda para agregar manualmente
