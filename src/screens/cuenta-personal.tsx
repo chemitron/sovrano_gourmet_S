@@ -1,6 +1,5 @@
 import { Stack, router } from "expo-router";
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -11,6 +10,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where
 } from "firebase/firestore";
@@ -145,8 +145,8 @@ const cancelOrder = async (orderId: string) => {
   const orderRole = order.role ?? ""; // normalize undefined → ""
 
   const ventaPath = employeeRoles.includes(orderRole)
-    ? "ventas/empleado"
-    : "ventas/cliente";
+  ? "ventas/empleado/registros"
+  : "ventas/cliente/registros";
 
   const ventasRef = collection(db, ventaPath);
 
@@ -155,7 +155,7 @@ const cancelOrder = async (orderId: string) => {
   const ventaSnap = await getDocs(q);
 
   for (const docSnap of ventaSnap.docs) {
-    await deleteDoc(doc(db, ventaPath, docSnap.id));
+    await deleteDoc(doc(db, ventaPath, String(order.orderNumber)));
   }
 };
 
@@ -210,11 +210,14 @@ const cargarCuenta = async () => {
         ? "ventas/empleado"
         : "ventas/cliente";
 
-      await addDoc(collection(db, ventaPath), {
-        fecha: new Date(),
-        orderNumber: order.orderNumber,
-        valor: order.total ?? 0,
-      });
+      await setDoc(
+  doc(db, ventaPath, String(order.orderNumber)), // Document ID = orderNumber
+  {
+    fecha: new Date(),
+    orderNumber: order.orderNumber,
+    valor: order.total ?? 0,
+  }
+);
     }
 
     // 3. Update account balance

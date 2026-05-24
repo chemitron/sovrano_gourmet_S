@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "34",
+      "buildNumber": "35",
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses the camera to scan QR codes.",
         "ITSAppUsesNonExemptEncryption": false
@@ -18,7 +18,7 @@
       "bundleIdentifier": "com.InnovativeSolutions.sovranogourmetS"
     },
     "android": {
-  "versionCode": 34,
+  "versionCode": 35,
   "permissions": [
     "android.permission.CAMERA"
   ],

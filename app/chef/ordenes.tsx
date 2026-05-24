@@ -239,8 +239,8 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
     const orderRole = order.role ?? ""; // normalize undefined → ""
 
     const ventaPath = employeeRoles.includes(orderRole)
-      ? "ventas/empleado"
-      : "ventas/cliente";
+  ? "ventas/empleado/registros"
+  : "ventas/cliente/registros";
 
     const ventasRef = collection(db, ventaPath);
 
@@ -249,7 +249,7 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
     const ventaSnap = await getDocs(q);
 
     for (const docSnap of ventaSnap.docs) {
-      await deleteDoc(doc(db, ventaPath, docSnap.id));
+      await deleteDoc(doc(db, ventaPath, String(order.orderNumber)));
     }
 
   } catch (e) {
