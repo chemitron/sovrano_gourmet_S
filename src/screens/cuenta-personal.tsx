@@ -207,8 +207,8 @@ const cargarCuenta = async () => {
       const orderRole = order.role ?? "";
 
       const ventaPath = employeeRoles.includes(orderRole)
-        ? "ventas/empleado"
-        : "ventas/cliente";
+  ? "ventas/empleado/registros"
+  : "ventas/cliente/registros";
 
       await setDoc(
   doc(db, ventaPath, String(order.orderNumber)), // Document ID = orderNumber
