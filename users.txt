@@ -22,5 +22,3 @@ eas build -p android --profile production
 
 
 Mover nombre cliente y estilista despue de ordenar
-
-Build 32 launched for android only (Added expo-go alert to update build in firestore)
