@@ -211,6 +211,19 @@ export default function WeeklyMenuEmpleado() {
         balance: increment(price),
       });
 
+      // 4. Save venta record
+const ventaRef = doc(
+  db,
+  "ventas/empleado/registros",
+  String(orderNumber)
+);
+
+await setDoc(ventaRef, {
+  fecha: new Date(),
+  orderNumber,
+  valor: price,
+});
+
       Alert.alert("Orden creada", `${itemName} fue ordenado y cargado a la cuenta.`);
     } catch (err) {
       console.log("🔥 ordenarMenuDelDia error:", err);
