@@ -1,5 +1,5 @@
 import { Linking, Text, View } from "react-native";
-import Button_style2 from "../components/Button_style2";
+import Button_style2 from "../../components/Button_style2";
 
 export default function UpdateRequired() {
   return (

@@ -32,10 +32,12 @@ export const checkAppVersion = async () => {
     const data = snap.data();
     console.log("[checkAppVersion] Firestore data:", data);
 
-    const minBuildNumber = Number(data.minBuildNumber ?? 0);
-    const minVersionCode = Number(data.minVersionCode ?? 0);
-    console.log("[checkAppVersion] minBuildNumber:", minBuildNumber);
-    console.log("[checkAppVersion] minVersionCode:", minVersionCode);
+    // 🔥 NEW FIELD NAMES
+    const requiredBuildNumber = Number(data.buildNumber ?? 0);   // iOS
+    const requiredVersionCode = Number(data.versionCode ?? 0);   // Android
+
+    console.log("[checkAppVersion] required buildNumber (iOS):", requiredBuildNumber);
+    console.log("[checkAppVersion] required versionCode (Android):", requiredVersionCode);
 
     // 3️⃣ Read current installed build number
     let currentBuild = 0;
@@ -49,18 +51,18 @@ export const checkAppVersion = async () => {
     console.log("[checkAppVersion] Platform:", Platform.OS);
     console.log("[checkAppVersion] Current build:", currentBuild);
 
-    // 4️⃣ Compare versions
-    const required = Platform.OS === "ios" ? minBuildNumber : minVersionCode;
-    console.log("[checkAppVersion] Required minimum:", required);
+    // 4️⃣ Strict comparison (must match EXACTLY)
+    const required = Platform.OS === "ios" ? requiredBuildNumber : requiredVersionCode;
+    console.log("[checkAppVersion] Required EXACT version:", required);
 
     if (!currentBuild || isNaN(currentBuild)) {
-      console.log("[checkAppVersion] Invalid current build → treat as outdated");
+      console.log("[checkAppVersion] Invalid current build → block app");
       console.log("=== [checkAppVersion] END (invalid build) ===");
       return false;
     }
 
-    const allowed = currentBuild >= required;
-    console.log("[checkAppVersion] Comparison result:", allowed);
+    const allowed = currentBuild === required;
+    console.log("[checkAppVersion] Comparison result (strict match):", allowed);
     console.log("=== [checkAppVersion] END ===");
     return allowed;
 
@@ -70,5 +72,3 @@ export const checkAppVersion = async () => {
     return true;
   }
 };
-
-
