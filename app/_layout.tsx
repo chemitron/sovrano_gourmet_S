@@ -11,9 +11,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     const verify = async () => {
-      console.log("=== [RootLayout] Version check starting ===");
       const ok = await checkAppVersion();
-      console.log("[RootLayout] Version check result:", ok);
 
       setAllowed(ok);
       setChecked(true);
@@ -24,7 +22,6 @@ export default function RootLayout() {
 
   // ⏳ Show loader while checking version
   if (!checked) {
-    console.log("[RootLayout] Waiting for version check → render loader");
 
     return (
       <View
@@ -42,12 +39,10 @@ export default function RootLayout() {
 
   // ❗ Outdated → render update screen directly (NO navigation)
   if (allowed === false) {
-    console.log("[RootLayout] Rendering <UpdateRequiredScreen />");
     return <UpdateRequiredScreen />;
   }
 
   // Allowed → render the app normally
-  console.log("[RootLayout] Rendering Stack");
   return (
     <InvitadoProvider>
       <Stack
