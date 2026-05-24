@@ -128,12 +128,6 @@ useEffect(() => {
                         onPress={() => router.push("/empleado")}
                       />
 </View> 
-<View style={{ paddingBottom: 20 }}>
-          <Button_style2
-                        title="Compras pendientes"
-                        onPress={() => router.push("/administrador/reports/comprasNecesarias")}
-                      />
-</View> 
           <Button_style2
                       title="Cerrar sesión"
                       onPress={handleLogout}
