@@ -67,6 +67,7 @@ export type Order = {
   role?: string;
   nombreInvitado?: string;
   nombreEstilista?: string;
+  cancelAccepted: boolean;
 };
 
 export type Account = {

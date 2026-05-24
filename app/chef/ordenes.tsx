@@ -101,7 +101,6 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
   collection(db, "orders"),
   where("paymentStatus", "==", "charged"),
   where("approvalStatus", "==", "aprobado"),
-  where("cancelAccepted", "==", false)
 );
 
   const unsub = onSnapshot(q, (snap) => {
@@ -136,7 +135,18 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
     knownOrderIdsRef.current = currentIds;
 
     // Update UI state
-    setOrders(list);
+    const filtered = list.filter((order) => {
+  // 1. Normal active orders
+  if (order.status !== "cancelado" && order.served === false) return true;
+
+  // 2. Cancelled orders waiting for chef approval
+  if (order.status === "cancelado" && order.cancelAccepted === false) return true;
+
+  return false;
+});
+
+setOrders(filtered);
+
   });
 
   return () => unsub();
@@ -264,6 +274,7 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
       status: "cancelado",
       served: true,
       canceledAt: new Date(),
+      cancelAccepted: false,
     });
   };
 

@@ -130,6 +130,7 @@ const cancelOrder = async (orderId: string) => {
     served: true,
     cancelledAt: new Date(),
     cancelledBy: auth.currentUser?.uid ?? null,
+    cancelAccepted: false,
   });
 
   // 2. Reverse balance if needed
