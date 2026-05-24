@@ -24,7 +24,7 @@ export const checkAppVersion = async () => {
     console.log("[checkAppVersion] Document exists:", snap.exists());
 
     if (!snap.exists()) {
-      console.log("[checkAppVersion] Document missing → allow app");
+      console.log("[checkAppVersion] Document missing → fallback allow");
       console.log("=== [checkAppVersion] END (missing doc) ===");
       return true;
     }
@@ -67,7 +67,9 @@ export const checkAppVersion = async () => {
     return allowed;
 
   } catch (e) {
-    console.log("[checkAppVersion] ERROR:", e);
+    // 🔥 FIRESTORE FALLBACK
+    console.log("[checkAppVersion] ERROR (Firestore unreachable):", e);
+    console.log("[checkAppVersion] Fallback → allow app to open");
     console.log("=== [checkAppVersion] END (fail open) ===");
     return true;
   }
