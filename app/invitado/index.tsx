@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { signOut } from "firebase/auth";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -66,15 +66,16 @@ export default function InvitadoIndex() {
       const balance = snap.exists() ? snap.data().balance ?? 0 : 0;
 
       if (balance > 0) {
-        // ⭐ Skip modal → auto-fill names
-        setRole("invitado");               // <-- REQUIRED FIX
-        setInvitadoEmail(email);
-        setNombreInvitado("usuario");
-        setNombreEstilista("usuario");
+  const data = snap.exists() ? snap.data() : {};
 
-        router.setParams({ from: undefined });
-        return;
-      }
+  setRole("invitado");
+  setInvitadoEmail(email);
+  setNombreInvitado(data.nombreInvitado || "usuario");
+  setNombreEstilista(data.nombreEstilista || "usuario");
+
+  router.setParams({ from: undefined });
+  return;
+}
 
       // ⭐ Balance = 0 → show modal
       setShowInvitadoModal(true);
@@ -111,16 +112,30 @@ export default function InvitadoIndex() {
     } catch (error) {}
   };
 
-  const handleInvitadoSubmit = () => {
-    if (!isFormValid) return;
+  const handleInvitadoSubmit = async () => {
+  if (!isFormValid) return;
 
-    setRole("invitado");
-    setInvitadoEmail(invitadoInput.trim());
-    setNombreInvitado(nombreInvitadoInput.trim());
-    setNombreEstilista(nombreEstilistaInput.trim());
+  const email = invitadoInput.trim();
+  const nombre = nombreInvitadoInput.trim();
+  const estilista = nombreEstilistaInput.trim();
 
-    setShowInvitadoModal(false);
-  };
+  setRole("invitado");
+  setInvitadoEmail(email);
+  setNombreInvitado(nombre);
+  setNombreEstilista(estilista);
+
+  // ⭐ Save names permanently
+  await setDoc(
+    doc(db, "cuentas_personales", email),
+    {
+      nombreInvitado: nombre,
+      nombreEstilista: estilista,
+    },
+    { merge: true }
+  );
+
+  setShowInvitadoModal(false);
+};
 
   const isFormValid =
     invitadoInput.trim().length > 0 &&

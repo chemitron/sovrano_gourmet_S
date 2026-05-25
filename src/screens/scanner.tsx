@@ -1,7 +1,7 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import Constants from "expo-constants";
 import { router } from "expo-router";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -120,35 +120,49 @@ export default function ScannerScreen() {
 
   // ⭐ 2. If balance > 0 → skip modal
   if (balance > 0) {
-    setInvitadoEmail(cleaned);
-    setNombreInvitado("usuario");
-    setNombreEstilista("usuario");
+  const ref = doc(db, "cuentas_personales", cleaned);
+  const snap = await getDoc(ref);
+  const data = snap.exists() ? snap.data() : {};
 
-    router.replace({
-      pathname: "/invitado",
-      params: { from: "scanner" },
-    });
+  setInvitadoEmail(cleaned);
+  setNombreInvitado(data.nombreInvitado || "usuario");
+  setNombreEstilista(data.nombreEstilista || "usuario");
 
-    return;
-  }
+  router.replace({
+    pathname: "/invitado",
+    params: { from: "scanner" },
+  });
+
+  return;
+}
 
   // ⭐ 3. If balance == 0 → show modal
   setModalVisible(true);
 };
 
-  const handleConfirm = () => {
-    setRole("invitado");
-    setInvitadoEmail(tempInvitado);
-    setNombreInvitado(nombreInvitado);
-    setNombreEstilista(nombreEstilista);
+  const handleConfirm = async () => {
+  setRole("invitado");
+  setInvitadoEmail(tempInvitado);
+  setNombreInvitado(nombreInvitado);
+  setNombreEstilista(nombreEstilista);
 
-    setModalVisible(false);
+  // ⭐ Save names permanently
+  await setDoc(
+    doc(db, "cuentas_personales", tempInvitado),
+    {
+      nombreInvitado,
+      nombreEstilista,
+    },
+    { merge: true }
+  );
 
-    router.replace({
-      pathname: "/invitado",
-      params: { from: "scanner" },
-    });
-  };
+  setModalVisible(false);
+
+  router.replace({
+    pathname: "/invitado",
+    params: { from: "scanner" },
+  });
+};
 
   return (
     <View style={styles.container}>
