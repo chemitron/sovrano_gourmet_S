@@ -140,7 +140,15 @@ const otherOrders = orders.filter((o) => !isStaffOrder(o));
   if (order.status !== "cancelado" && order.served === false) return true;
 
   // 2. Cancelled orders waiting for chef approval
-  if (order.status === "cancelado" && order.cancelAccepted === false) return true;
+  // 2. Cancelled orders waiting for chef approval (ONLY if canceled by user)
+if (
+  order.status === "cancelado" &&
+  order.cancelAccepted === false &&
+  order.canceledBy !== "chef"
+) {
+  return true;
+}
+
 
   return false;
 });
@@ -242,7 +250,8 @@ setOrders(filtered);
   status: "cancelado",
   served: true,
   canceledAt: new Date(),
-  cancelAccepted: false,
+  cancelAccepted: true,   // ⭐ Chef cancels → auto‑accepted
+  canceledBy: "chef",     // ⭐ Mark who canceled
 });
 
     // 4. DELETE venta record
@@ -271,11 +280,12 @@ setOrders(filtered);
 
   const markCancelada = async (orderId: string) => {
     await updateDoc(doc(db, "orders", orderId), {
-      status: "cancelado",
-      served: true,
-      canceledAt: new Date(),
-      cancelAccepted: false,
-    });
+  status: "cancelado",
+  served: true,
+  canceledAt: new Date(),
+  cancelAccepted: true,   // ⭐ Chef cancels → auto‑accepted
+  canceledBy: "chef",
+});
   };
 
   // ⭐ Sorting helpers
@@ -381,45 +391,53 @@ const sortByClientName = (a: Order, b: Order) => {
                   </View>
 
                   <View style={styles.rightSide}>
-                    {order.status === "cancelado" ? (
-  <Button_style2
-    title="Aceptar cancelación"
-    onPress={() =>
-      updateDoc(doc(db, "orders", order.id), {
-        cancelAccepted: true,
-      })
-    }
-  />
-) : (
-  <Button_style2
-    title="Cancelar"
-    onPress={() =>
-      Alert.alert(
-        "Cancelar orden",
-        "¿Seguro que deseas cancelar esta orden?",
-        [
-          { text: "No", style: "cancel" },
-          { text: "Sí, cancelar", onPress: () => cancelarConBalance(order) }
-        ]
-      )
-    }
-  />
-)}
 
-                    {!order.empezada && order.status !== "cancelado" && (
-                      <Button_style2
-                        title="Empezada"
-                        onPress={() => markStarted(order.id)}
-                      />
-                    )}
+  {/* ⭐ Show "Aceptar cancelación" ONLY if canceled by user */}
+  {order.status === "cancelado" && order.canceledBy !== "chef" ? (
+    <Button_style2
+      title="Aceptar cancelación"
+      onPress={() =>
+        updateDoc(doc(db, "orders", order.id), {
+          cancelAccepted: true,
+        })
+      }
+    />
+  ) : null}
 
-                    {order.empezada && order.status !== "cancelado" && (
-                      <Button_style2
-                        title="Servida"
-                        onPress={() => markServida(order.id, order.createdAt)}
-                      />
-                    )}
-                  </View>
+  {/* ⭐ Show "Cancelar" ONLY if order is NOT canceled */}
+  {order.status !== "cancelado" && (
+    <Button_style2
+      title="Cancelar"
+      onPress={() =>
+        Alert.alert(
+          "Cancelar orden",
+          "¿Seguro que deseas cancelar esta orden?",
+          [
+            { text: "No", style: "cancel" },
+            { text: "Sí, cancelar", onPress: () => cancelarConBalance(order) }
+          ]
+        )
+      }
+    />
+  )}
+
+  {/* ⭐ Empezada button */}
+  {!order.empezada && order.status !== "cancelado" && (
+    <Button_style2
+      title="Empezada"
+      onPress={() => markStarted(order.id)}
+    />
+  )}
+
+  {/* ⭐ Servida button */}
+  {order.empezada && order.status !== "cancelado" && (
+    <Button_style2
+      title="Servida"
+      onPress={() => markServida(order.id, order.createdAt)}
+    />
+  )}
+
+</View>
                 </View>
               </View>
             ))}
@@ -472,45 +490,53 @@ const sortByClientName = (a: Order, b: Order) => {
                   </View>
 
                   <View style={styles.rightSide}>
-                    {order.status === "cancelado" ? (
-  <Button_style2
-    title="Aceptar cancelación"
-    onPress={() =>
-      updateDoc(doc(db, "orders", order.id), {
-        cancelAccepted: true,
-      })
-    }
-  />
-) : (
-  <Button_style2
-    title="Cancelar"
-    onPress={() =>
-      Alert.alert(
-        "Cancelar orden",
-        "¿Seguro que deseas cancelar esta orden?",
-        [
-          { text: "No", style: "cancel" },
-          { text: "Sí, cancelar", onPress: () => cancelarConBalance(order) }
-        ]
-      )
-    }
-  />
-)}
 
-                    {!order.empezada && order.status !== "cancelado" && (
-                      <Button_style2
-                        title="Empezada"
-                        onPress={() => markStarted(order.id)}
-                      />
-                    )}
+  {/* ⭐ Show "Aceptar cancelación" ONLY if canceled by user */}
+  {order.status === "cancelado" && order.canceledBy !== "chef" ? (
+    <Button_style2
+      title="Aceptar cancelación"
+      onPress={() =>
+        updateDoc(doc(db, "orders", order.id), {
+          cancelAccepted: true,
+        })
+      }
+    />
+  ) : null}
 
-                    {order.empezada && order.status !== "cancelado" && (
-                      <Button_style2
-                        title="Servida"
-                        onPress={() => markServida(order.id, order.createdAt)}
-                      />
-                    )}
-                  </View>
+  {/* ⭐ Show "Cancelar" ONLY if order is NOT canceled */}
+  {order.status !== "cancelado" && (
+    <Button_style2
+      title="Cancelar"
+      onPress={() =>
+        Alert.alert(
+          "Cancelar orden",
+          "¿Seguro que deseas cancelar esta orden?",
+          [
+            { text: "No", style: "cancel" },
+            { text: "Sí, cancelar", onPress: () => cancelarConBalance(order) }
+          ]
+        )
+      }
+    />
+  )}
+
+  {/* ⭐ Empezada button */}
+  {!order.empezada && order.status !== "cancelado" && (
+    <Button_style2
+      title="Empezada"
+      onPress={() => markStarted(order.id)}
+    />
+  )}
+
+  {/* ⭐ Servida button */}
+  {order.empezada && order.status !== "cancelado" && (
+    <Button_style2
+      title="Servida"
+      onPress={() => markServida(order.id, order.createdAt)}
+    />
+  )}
+
+</View>
                 </View>
               </View>
             ))}

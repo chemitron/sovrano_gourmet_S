@@ -56,36 +56,36 @@ export default function InvitadoIndex() {
 
   // Coming from login and no invitadoEmail yet
   if (params.from === "login" && !invitadoEmail) {
-    if (isExpoGo) {
-      // ⭐ Expo Go → Check balance BEFORE showing modal
-      const checkBalance = async () => {
-        const email = invitadoInput.trim().toLowerCase();
-        const ref = doc(db, "cuentas_personales", email);
-        const snap = await getDoc(ref);
+  if (isExpoGo) {
+    // ⭐ Expo Go → Check balance BEFORE showing modal
+    const checkBalance = async () => {
+      const email = invitadoInput.trim().toLowerCase();
+      const ref = doc(db, "cuentas_personales", email);
+      const snap = await getDoc(ref);
 
-        const balance = snap.exists() ? snap.data().balance ?? 0 : 0;
+      const balance = snap.exists() ? snap.data().balance ?? 0 : 0;
 
-        if (balance > 0) {
-          // ⭐ Skip modal → auto-fill names
-          setRole("invitado");
-          setInvitadoEmail(email);
-          setNombreInvitado("usuario");
-          setNombreEstilista("usuario");
+      if (balance > 0) {
+        // ⭐ Skip modal → auto-fill names
+        setRole("invitado");               // <-- REQUIRED FIX
+        setInvitadoEmail(email);
+        setNombreInvitado("usuario");
+        setNombreEstilista("usuario");
 
-          router.setParams({ from: undefined });
-          return;
-        }
+        router.setParams({ from: undefined });
+        return;
+      }
 
-        // ⭐ Balance = 0 → show modal
-        setShowInvitadoModal(true);
-      };
+      // ⭐ Balance = 0 → show modal
+      setShowInvitadoModal(true);
+    };
 
-      checkBalance();
-    } else {
-      // Production → scanner
-      router.replace("/invitado/scanner");
-    }
+    checkBalance();
+  } else {
+    // Production → scanner
+    router.replace("/invitado/scanner");
   }
+}
 
   router.setParams({ from: undefined });
 }, [params.from, invitadoEmail]);
