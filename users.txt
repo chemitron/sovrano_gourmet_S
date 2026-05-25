@@ -18,7 +18,7 @@ eas build -p android --profile production
 
 
 
-
+Mientras el codigo QR este activo no pedir nombre de estiista o cliente para nuevas ordenes.
 
 
 Mover nombre cliente y estilista despue de ordenar

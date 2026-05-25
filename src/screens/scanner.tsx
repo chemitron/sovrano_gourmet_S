@@ -1,6 +1,7 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import Constants from "expo-constants";
 import { router } from "expo-router";
+import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -11,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { db } from "../../services/firestore/firebase";
 import {
   useInvitado,
   useNombreEstilista,
@@ -93,31 +95,45 @@ export default function ScannerScreen() {
     }
   };
 
-  const handleBarcodeScanned = ({ data }: { data: string }) => {
+  const handleBarcodeScanned = async ({ data }: { data: string }) => {
   if (isScanning) return;
-
   setIsScanning(true);
 
   const invitado = extractInvitado(data);
 
-  if (invitado) {
-    const cleaned = invitado.trim().toLowerCase();
-    setTempInvitado(cleaned);
-
-    if (role === "invitado") {
-      // ⭐ Invitado → pedir datos
-      setModalVisible(true);
-    } else {
-      // ⭐ Usuario → NO abrir modal
-      setInvitadoEmail(cleaned);
-      setNombreInvitado("usuario");
-      setNombreEstilista("usuario");
-
-      router.replace("/usuario/scanner");
-    }
-  } else {
+  if (!invitado) {
     setIsScanning(false);
+    return;
   }
+
+  const cleaned = invitado.trim().toLowerCase();
+  setTempInvitado(cleaned);
+
+  // ⭐ 1. Check Firestore balance
+  const cuentaRef = doc(db, "cuentas_personales", cleaned);
+  const cuentaSnap = await getDoc(cuentaRef);
+
+  let balance = 0;
+  if (cuentaSnap.exists()) {
+    balance = cuentaSnap.data().balance ?? 0;
+  }
+
+  // ⭐ 2. If balance > 0 → skip modal
+  if (balance > 0) {
+    setInvitadoEmail(cleaned);
+    setNombreInvitado("usuario");
+    setNombreEstilista("usuario");
+
+    router.replace({
+      pathname: "/invitado",
+      params: { from: "scanner" },
+    });
+
+    return;
+  }
+
+  // ⭐ 3. If balance == 0 → show modal
+  setModalVisible(true);
 };
 
   const handleConfirm = () => {

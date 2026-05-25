@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { signOut } from "firebase/auth";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -48,25 +48,47 @@ export default function InvitadoIndex() {
 
   // ⭐ Handle navigation logic for Expo Go vs Production
   useEffect(() => {
-    // If coming from scanner → values already set → do NOT open modal
-    if (params.from === "scanner") {
-      router.setParams({ from: undefined });
-      return;
-    }
-
-    // Coming from login and no invitadoEmail yet
-    if (params.from === "login" && !invitadoEmail) {
-      if (isExpoGo) {
-        // Expo Go → modal
-        setShowInvitadoModal(true);
-      } else {
-        // Production → scanner
-        router.replace("/invitado/scanner");
-      }
-    }
-
+  // If coming from scanner → values already set → do NOT open modal
+  if (params.from === "scanner") {
     router.setParams({ from: undefined });
-  }, [params.from, invitadoEmail]);
+    return;
+  }
+
+  // Coming from login and no invitadoEmail yet
+  if (params.from === "login" && !invitadoEmail) {
+    if (isExpoGo) {
+      // ⭐ Expo Go → Check balance BEFORE showing modal
+      const checkBalance = async () => {
+        const email = invitadoInput.trim().toLowerCase();
+        const ref = doc(db, "cuentas_personales", email);
+        const snap = await getDoc(ref);
+
+        const balance = snap.exists() ? snap.data().balance ?? 0 : 0;
+
+        if (balance > 0) {
+          // ⭐ Skip modal → auto-fill names
+          setRole("invitado");
+          setInvitadoEmail(email);
+          setNombreInvitado("usuario");
+          setNombreEstilista("usuario");
+
+          router.setParams({ from: undefined });
+          return;
+        }
+
+        // ⭐ Balance = 0 → show modal
+        setShowInvitadoModal(true);
+      };
+
+      checkBalance();
+    } else {
+      // Production → scanner
+      router.replace("/invitado/scanner");
+    }
+  }
+
+  router.setParams({ from: undefined });
+}, [params.from, invitadoEmail]);
 
   // ⭐ Listen to cocina open/close state
   useEffect(() => {
