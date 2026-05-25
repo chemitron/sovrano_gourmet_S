@@ -227,12 +227,20 @@ setOrders(filtered);
 
   const cancelarConBalance = async (order: Order) => {
   try {
-    const userEmail = order.userEmail;
-    if (!userEmail) return;
+    // 1. Determine the correct email/id for cuentas_personales
+    const userEmail =
+      order.userEmail ||
+      order.invitadoEmail ||
+      order.invitado ||
+      null;
+
+    if (!userEmail) {
+      throw new Error("No se encontró el email del usuario para ajustar balance");
+    }
 
     const total = getOrderTotal(order);
 
-    // 1. Load current balance from cuentas_personales
+    // 2. Load current balance
     const cuentaRef = doc(db, "cuentas_personales", userEmail);
     const cuentaSnap = await getDoc(cuentaRef);
 
@@ -240,31 +248,29 @@ setOrders(filtered);
       ? cuentaSnap.data().balance ?? 0
       : 0;
 
-    // 2. Deduct the order total
+    // 3. Deduct the order total
     await updateDoc(cuentaRef, {
       balance: currentBalance - total,
     });
 
-    // 3. Mark order as canceled
+    // 4. Mark order as canceled by chef
     await updateDoc(doc(db, "orders", order.id), {
-  status: "cancelado",
-  served: true,
-  canceledAt: new Date(),
-  cancelAccepted: true,   // ⭐ Chef cancels → auto‑accepted
-  canceledBy: "chef",     // ⭐ Mark who canceled
-});
+      status: "cancelado",
+      served: true,
+      canceledAt: new Date(),
+      cancelAccepted: true,
+      canceledBy: "chef",
+    });
 
-    // 4. DELETE venta record
+    // 5. DELETE venta record
     const employeeRoles = ["empleado", "contador", "recepcion", "chef", "admin"];
-    const orderRole = order.role ?? ""; // normalize undefined → ""
+    const orderRole = order.role ?? "";
 
     const ventaPath = employeeRoles.includes(orderRole)
-  ? "ventas/empleado/registros"
-  : "ventas/cliente/registros";
+      ? "ventas/empleado/registros"
+      : "ventas/cliente/registros";
 
     const ventasRef = collection(db, ventaPath);
-
-    // Find venta by orderNumber
     const q = query(ventasRef, where("orderNumber", "==", order.orderNumber));
     const ventaSnap = await getDocs(q);
 
@@ -273,20 +279,9 @@ setOrders(filtered);
     }
 
   } catch (e) {
-    Alert.alert("Error", "No se pudo cancelar y ajustar el balance");
+    Alert.alert("Error", "No se pudo cancelar la orden");
   }
 };
-
-
-  const markCancelada = async (orderId: string) => {
-    await updateDoc(doc(db, "orders", orderId), {
-  status: "cancelado",
-  served: true,
-  canceledAt: new Date(),
-  cancelAccepted: true,   // ⭐ Chef cancels → auto‑accepted
-  canceledBy: "chef",
-});
-  };
 
   // ⭐ Sorting helpers
 const sortByUsername = (a: Order, b: Order) => {
@@ -393,7 +388,9 @@ const sortByClientName = (a: Order, b: Order) => {
                   <View style={styles.rightSide}>
 
   {/* ⭐ Show "Aceptar cancelación" ONLY if canceled by user */}
-  {order.status === "cancelado" && order.canceledBy !== "chef" ? (
+  {order.status === "cancelado" &&
+   order.cancelAccepted === false &&
+   order.canceledBy !== "chef" && (
     <Button_style2
       title="Aceptar cancelación"
       onPress={() =>
@@ -402,7 +399,7 @@ const sortByClientName = (a: Order, b: Order) => {
         })
       }
     />
-  ) : null}
+  )}
 
   {/* ⭐ Show "Cancelar" ONLY if order is NOT canceled */}
   {order.status !== "cancelado" && (
@@ -421,7 +418,7 @@ const sortByClientName = (a: Order, b: Order) => {
     />
   )}
 
-  {/* ⭐ Empezada button */}
+  {/* ⭐ Empezada */}
   {!order.empezada && order.status !== "cancelado" && (
     <Button_style2
       title="Empezada"
@@ -429,7 +426,7 @@ const sortByClientName = (a: Order, b: Order) => {
     />
   )}
 
-  {/* ⭐ Servida button */}
+  {/* ⭐ Servida */}
   {order.empezada && order.status !== "cancelado" && (
     <Button_style2
       title="Servida"
@@ -492,7 +489,9 @@ const sortByClientName = (a: Order, b: Order) => {
                   <View style={styles.rightSide}>
 
   {/* ⭐ Show "Aceptar cancelación" ONLY if canceled by user */}
-  {order.status === "cancelado" && order.canceledBy !== "chef" ? (
+  {order.status === "cancelado" &&
+   order.cancelAccepted === false &&
+   order.canceledBy !== "chef" && (
     <Button_style2
       title="Aceptar cancelación"
       onPress={() =>
@@ -501,7 +500,7 @@ const sortByClientName = (a: Order, b: Order) => {
         })
       }
     />
-  ) : null}
+  )}
 
   {/* ⭐ Show "Cancelar" ONLY if order is NOT canceled */}
   {order.status !== "cancelado" && (
@@ -520,7 +519,7 @@ const sortByClientName = (a: Order, b: Order) => {
     />
   )}
 
-  {/* ⭐ Empezada button */}
+  {/* ⭐ Empezada */}
   {!order.empezada && order.status !== "cancelado" && (
     <Button_style2
       title="Empezada"
@@ -528,7 +527,7 @@ const sortByClientName = (a: Order, b: Order) => {
     />
   )}
 
-  {/* ⭐ Servida button */}
+  {/* ⭐ Servida */}
   {order.empezada && order.status !== "cancelado" && (
     <Button_style2
       title="Servida"

@@ -69,6 +69,7 @@ export type Order = {
   nombreEstilista?: string;
   cancelAccepted: boolean;
   canceledBy?: string;
+  invitadoEmail?: string;
 };
 
 export type Account = {
