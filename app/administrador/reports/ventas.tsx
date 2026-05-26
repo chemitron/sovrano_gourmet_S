@@ -167,6 +167,7 @@ export default function ReportsVentas() {
               value={showPicker === "inicio" ? fechaInicio : fechaFinal}
               mode="date"
               display={Platform.OS === "ios" ? "spinner" : "default"}
+              textColor="#000" 
               onChange={(event, selectedDate) => {
                 if (selectedDate) {
                   if (showPicker === "inicio") setFechaInicio(selectedDate);
