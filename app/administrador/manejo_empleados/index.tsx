@@ -30,13 +30,14 @@ type UserRecord = {
   lastLogin?: string;
   role: string;
   activo: boolean;
+  estacion_name: string;
 };
 
 export default function Manejo_empleadosIndex() {
   const [selectedFilter, setSelectedFilter] = useState<string>('empleadoActivo');
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-
+  const [searchQuery, setSearchQuery] = useState("");
   const [editingUser, setEditingUser] = useState<UserRecord | null>(null);
   const [editFields, setEditFields] = useState<Partial<UserRecord>>({});
 
@@ -61,7 +62,8 @@ export default function Manejo_empleadosIndex() {
     fetchUsers();
   }, []);
 
-  const filteredUsers = users.filter(u => {
+  const filteredUsers = users
+  .filter(u => {
     switch (selectedFilter) {
       case 'empleadoActivo':
         return (u.role === 'admin' || u.role === 'empleado' || u.role === 'recepcion' || u.role === 'chef' || u.role === 'contador') && u.activo === true;
@@ -74,6 +76,25 @@ export default function Manejo_empleadosIndex() {
       default:
         return false;
     }
+  })
+  .filter(u => {
+    if (!searchQuery.trim()) return true;
+
+    const q = searchQuery.toLowerCase();
+
+    const username = (u.username ?? "").toString().toLowerCase();
+    const email = (u.email ?? "").toString().toLowerCase();
+    const phone = (u.phoneNumber ?? "").toString().toLowerCase();
+    const estacion_name = (u.estacion_name ?? "").toString().toLowerCase();
+    const autoNumber = (u.autoNumber ?? "").toString().toLowerCase();
+
+    return (
+      username.includes(q) ||
+      email.includes(q) ||
+      phone.includes(q) ||
+      estacion_name.includes(q) ||
+      autoNumber.includes(q)
+    );
   });
 
   const handleEdit = (user: UserRecord) => {
@@ -85,7 +106,41 @@ export default function Manejo_empleadosIndex() {
   if (!editingUser) return;
 
   try {
-    // 1) Update users collection
+    const newEstacion = editFields.estacion_name?.trim() || "";
+
+    // -----------------------------
+    // 1) VALIDATE estacion exists in Firestore
+    // -----------------------------
+    const estacionesSnap = await getDocs(collection(db, "estaciones"));
+    const estacionExists = estacionesSnap.docs.some(
+      (d) => d.data().estacion_name === newEstacion
+    );
+
+    if (!estacionExists) {
+      alert(`La estación "${newEstacion}" no existe en Firestore. Debe empezar con letra minuscula`);
+      return;
+    }
+
+    // -----------------------------
+    // 2) VALIDATE estacion is not assigned to another user
+    // -----------------------------
+    const usersSnap = await getDocs(collection(db, "users"));
+    const estacionTaken = usersSnap.docs.some((d) => {
+      const data = d.data();
+      return (
+        data.estacion === newEstacion &&
+        d.id !== editingUser.id // exclude the user being edited
+      );
+    });
+
+    if (estacionTaken) {
+      alert(`La estación "${newEstacion}" ya está asignada a otro usuario.`);
+      return;
+    }
+
+    // -----------------------------
+    // 3) UPDATE users collection
+    // -----------------------------
     const userRef = doc(db, "users", editingUser.id);
     await updateDoc(userRef, {
       username: editFields.username,
@@ -93,9 +148,12 @@ export default function Manejo_empleadosIndex() {
       phoneNumber: editFields.phoneNumber,
       lastLogin: editFields.lastLogin,
       activo: editFields.activo,
+      estacion_name: newEstacion, // ⭐ NEW FIELD
     });
 
-    // 2) Update cuentas_personales (if exists)
+    // -----------------------------
+    // 4) UPDATE cuentas_personales (if exists)
+    // -----------------------------
     if (editFields.email) {
       const cuentaRef = doc(db, "cuentas_personales", editFields.email);
       await updateDoc(cuentaRef, {
@@ -103,11 +161,13 @@ export default function Manejo_empleadosIndex() {
       });
     }
 
-    // 3) Update local state
-    setUsers(prev =>
-      prev.map(u =>
+    // -----------------------------
+    // 5) UPDATE LOCAL STATE
+    // -----------------------------
+    setUsers((prev) =>
+      prev.map((u) =>
         u.id === editingUser.id
-          ? { ...u, ...editFields } as UserRecord
+          ? { ...u, ...editFields, estacion: newEstacion, estacion_name: newEstacion }
           : u
       )
     );
@@ -166,6 +226,17 @@ export default function Manejo_empleadosIndex() {
               </View>
             </View>
 
+            {/* Search Bar */}
+<View style={styles.searchContainer}>
+  <TextInput
+    style={styles.searchInput}
+    placeholder="Buscar por nombre, email, estación, teléfono..."
+    placeholderTextColor="#555"
+    value={searchQuery}
+    onChangeText={setSearchQuery}
+  />
+</View>
+
             {/* User list */}
             <View style={styles.container}>
               {loading ? (
@@ -178,6 +249,7 @@ export default function Manejo_empleadosIndex() {
                         <Text style={styles.field}>Número de Usuario: {u.autoNumber}</Text>
                         <Text style={styles.field}>Usuario: {u.username}</Text>
                         <Text style={styles.field}>Funcion: {u.role}</Text>
+                        <Text style={styles.field}>estacion: {u.estacion_name}</Text>
                         <Text style={styles.field}>Email: {u.email}</Text>
                         <Text style={styles.field}>Teléfono: {u.phoneNumber}</Text>
                         <Text style={styles.field}>Creado: {formatDate(u.createdAt)}</Text>
@@ -201,18 +273,28 @@ export default function Manejo_empleadosIndex() {
                   value={editFields.username}
                   onChangeText={t => setEditFields({ ...editFields, username: t })}
                   placeholder="Nombre"
+                  placeholderTextColor="#555"
+                />
+                 <TextInput
+                  style={styles.input}
+                  value={editFields.estacion_name}
+                  onChangeText={t => setEditFields({ ...editFields, estacion_name: t })}
+                  placeholder="estacion name: Ejemplo: invitado_1"
+                  placeholderTextColor="#555"
                 />
                 <TextInput
                   style={styles.input}
                   value={editFields.email}
                   onChangeText={t => setEditFields({ ...editFields, email: t })}
                   placeholder="Email"
+                  placeholderTextColor="#555"
                 />
                 <TextInput
                   style={styles.input}
                   value={editFields.phoneNumber}
                   onChangeText={t => setEditFields({ ...editFields, phoneNumber: t })}
                   placeholder="Teléfono"
+                  placeholderTextColor="#555"
                 />
 
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}>
@@ -325,4 +407,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
+  searchContainer: {
+  width: "90%",
+  marginBottom: 15,
+},
+
+searchInput: {
+  backgroundColor: "#fff",
+  borderWidth: 1,
+  borderColor: "#ccc",
+  borderRadius: 8,
+  padding: 10,
+  fontSize: 16,
+  color: "#000",
+},
 });

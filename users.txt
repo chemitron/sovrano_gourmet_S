@@ -18,4 +18,3 @@ eas build -p android --profile production
 
 
 
-Mover nombre cliente y estilista despue de ordenar

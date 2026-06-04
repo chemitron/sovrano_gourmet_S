@@ -13,6 +13,9 @@ type InvitadoContextType = {
   nombreEstilista: string | null;
   setNombreEstilista: (nombreEstilista: string | null) => void;
 
+  stylistId: string | null;
+  setStylistId: (id: string | null) => void;
+
   resetContext: () => void;   // ⭐ NEW
 };
 
@@ -25,6 +28,7 @@ export const InvitadoProvider = ({ children }: { children: React.ReactNode }) =>
   const [invitadoEmail, setInvitadoEmail] = useState<string | null>(null);
   const [nombreInvitado, setNombreInvitado] = useState<string | null>(null);
   const [nombreEstilista, setNombreEstilista] = useState<string | null>(null);
+  const [stylistId, setStylistId] = useState<string | null>(null);
 
   // ⭐ GLOBAL RESET FUNCTION
   const resetContext = () => {
@@ -45,6 +49,8 @@ export const InvitadoProvider = ({ children }: { children: React.ReactNode }) =>
         setNombreInvitado,
         nombreEstilista,
         setNombreEstilista,
+        stylistId,
+        setStylistId,
         resetContext,   // ⭐ expose reset
       }}
     >
@@ -86,4 +92,10 @@ export const useResetContext = () => {
   const ctx = useContext(InvitadoContext);
   if (!ctx) throw new Error("useResetContext must be used within an InvitadoProvider");
   return ctx.resetContext;
+};
+
+export const useStylistId = () => {
+  const ctx = useContext(InvitadoContext);
+  if (!ctx) throw new Error("useStylistId must be used within an InvitadoProvider");
+  return { stylistId: ctx.stylistId, setStylistId: ctx.setStylistId };
 };
